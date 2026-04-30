@@ -43,7 +43,6 @@ docker-compose up -d
 - 启用 HTTPS（微信小程序要求）
 
 Nginx 配置示例：
-
 ```nginx
 server {
     listen 443 ssl;
@@ -108,9 +107,7 @@ CheckIn/
 ## API 接口
 
 ### POST /api/auth/login
-
 微信登录
-
 ```json
 // Request
 { "code": "wx_login_code" }
@@ -120,9 +117,7 @@ CheckIn/
 ```
 
 ### POST /api/checkin
-
 打卡 (需要 Bearer Token)
-
 ```json
 // Headers
 Authorization: Bearer {token}
@@ -132,9 +127,7 @@ Authorization: Bearer {token}
 ```
 
 ### GET /api/stats
-
 查询统计 (需要 Bearer Token)
-
 ```json
 // Headers
 Authorization: Bearer {token}

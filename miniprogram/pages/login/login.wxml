@@ -1,0 +1,16 @@
+<view class="login-container">
+  <view class="logo-section">
+    <view class="logo">
+      <text>📅</text>
+    </view>
+    <text class="app-name">每日打卡</text>
+    <text class="app-desc">记录每一天，成就更好的自己</text>
+  </view>
+
+  <view class="login-section">
+    <button class="login-btn" bindtap="handleLogin" loading="{{loading}}" disabled="{{loading}}">
+      微信一键登录
+    </button>
+    <text class="tips">登录后即可同步您的打卡数据</text>
+  </view>
+</view>

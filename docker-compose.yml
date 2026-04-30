@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: checkin-backend
+    restart: always
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - WX_APP_ID=your_wx_appid
+      - WX_APP_SECRET=your_wx_appsecret

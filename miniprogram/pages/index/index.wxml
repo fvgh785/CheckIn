@@ -1,0 +1,37 @@
+<view class="container">
+  <view class="header">
+    <text class="title">每日打卡</text>
+    <text class="date">{{today}}</text>
+  </view>
+
+  <view class="checkin-section">
+    <view class="checkin-btn {{hasChecked ? 'checked' : ''}}" bindtap="handleCheckIn">
+      <text wx:if="{{!hasChecked}}" class="btn-text">打卡</text>
+      <text wx:else class="btn-text checked-text">已打卡</text>
+    </view>
+    <view wx:if="{{!isLoggedIn}}" class="login-tip">
+      <text>点击按钮后登录以记录数据</text>
+    </view>
+  </view>
+
+  <view class="data-panel">
+    <view class="data-item {{!isLoggedIn ? 'blur' : ''}}">
+      <view class="data-value">{{isLoggedIn ? stats.currentStreak : '--'}}</view>
+      <view class="data-label">连续天数</view>
+    </view>
+    <view class="divider"></view>
+    <view class="data-item {{!isLoggedIn ? 'blur' : ''}}">
+      <view class="data-value">{{isLoggedIn ? stats.maxStreak : '--'}}</view>
+      <view class="data-label">最高记录</view>
+    </view>
+    <view class="divider"></view>
+    <view class="data-item {{!isLoggedIn ? 'blur' : ''}}">
+      <view class="data-value">{{isLoggedIn ? stats.totalDays : '--'}}</view>
+      <view class="data-label">累计天数</view>
+    </view>
+  </view>
+
+  <view wx:if="{{loading}}" class="loading">
+    <text>加载中...</text>
+  </view>
+</view>

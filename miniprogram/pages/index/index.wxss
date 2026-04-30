@@ -1,0 +1,131 @@
+.container {
+  padding: 60rpx 40rpx 40rpx;
+  min-height: 100vh;
+  box-sizing: border-box;
+  background-color: #f8f9fa;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 80rpx;
+}
+
+.title {
+  font-size: 50rpx;
+  font-weight: 800;
+  color: #1a1a1a;
+  display: block;
+  margin-bottom: 12rpx;
+  letter-spacing: 1rpx;
+}
+
+.date {
+  font-size: 26rpx;
+  color: #888;
+  font-family: sans-serif;
+}
+
+.checkin-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 100rpx;
+}
+
+.checkin-btn {
+  width: 260rpx;
+  height: 260rpx;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #3b82f6 0%, #1d4ed8 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 20rpx 40rpx rgba(29, 78, 216, 0.35), 0 4rpx 10rpx rgba(0, 0, 0, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 1;
+}
+
+.checkin-btn:active {
+  transform: scale(0.94);
+  box-shadow: 0 10rpx 20rpx rgba(29, 78, 216, 0.25);
+}
+
+.checkin-btn.checked {
+  background: linear-gradient(145deg, #10b981 0%, #047857 100%);
+  box-shadow: 0 20rpx 40rpx rgba(4, 120, 87, 0.35), 0 4rpx 10rpx rgba(0, 0, 0, 0.05);
+}
+
+.btn-text {
+  color: #ffffff;
+  font-size: 40rpx;
+  font-weight: 700;
+  letter-spacing: 2rpx;
+  z-index: 2;
+}
+
+.login-tip {
+  margin-top: 36rpx;
+  padding: 8rpx 24rpx;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 20rpx;
+  color: #999;
+  font-size: 24rpx;
+}
+
+/* 现代化数据面板 */
+.data-panel {
+  background: white;
+  border-radius: 32rpx;
+  padding: 48rpx 30rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  box-shadow: 0 10rpx 40rpx rgba(0, 0, 0, 0.04);
+}
+
+.data-item {
+  flex: 1;
+  text-align: center;
+  position: relative;
+}
+
+.data-item.blur {
+  opacity: 0.5;
+  filter: blur(2px);
+  transition: all 0.3s;
+}
+
+.data-value {
+  font-size: 64rpx;
+  font-weight: 800;
+  background: linear-gradient(135deg, #2563eb 0%, #60a5fa 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1.2;
+  font-family: sans-serif;
+}
+
+.data-label {
+  font-size: 24rpx;
+  color: #9ca3af;
+  margin-top: 10rpx;
+  letter-spacing: 1rpx;
+}
+
+.divider {
+  width: 2rpx;
+  height: 60rpx;
+  background-image: linear-gradient(to bottom, transparent 0%, #e5e7eb 50%, transparent 100%);
+  margin: 0 20rpx;
+}
+
+.loading {
+  text-align: center;
+  margin-top: 60rpx;
+  color: #999;
+  font-size: 26rpx;
+}
