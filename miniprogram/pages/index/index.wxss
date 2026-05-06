@@ -1,5 +1,5 @@
 .container {
-  padding: 60rpx 40rpx 40rpx;
+  padding: 30rpx 40rpx 40rpx;
   min-height: 100vh;
   box-sizing: border-box;
   background-color: #f8f9fa;
@@ -7,9 +7,158 @@
   flex-direction: column;
 }
 
+/* ========== 宠物区域 ========== */
+.pet-section {
+  margin-bottom: 24rpx;
+}
+
+.pet-card {
+  display: flex;
+  align-items: center;
+  background: white;
+  border-radius: 24rpx;
+  padding: 28rpx 30rpx;
+  box-shadow: 0 8rpx 30rpx rgba(0, 0, 0, 0.04);
+}
+
+.pet-avatar {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 24rpx;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 24rpx;
+  transition: all 0.3s;
+}
+
+.pet-avatar.happy {
+  background: linear-gradient(135deg, #d1fae5, #6ee7b7);
+  animation: petBounce 0.6s ease;
+}
+
+.pet-avatar.sick {
+  background: linear-gradient(135deg, #fee2e2, #fca5a5);
+  animation: petShake 0.5s ease infinite;
+}
+
+@keyframes petBounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+@keyframes petShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4rpx); }
+  75% { transform: translateX(4rpx); }
+}
+
+.pet-emoji {
+  font-size: 64rpx;
+}
+
+.pet-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.pet-name {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 12rpx;
+}
+
+.pet-stage {
+  font-size: 22rpx;
+  color: #6b7280;
+  font-weight: 400;
+  margin-left: 8rpx;
+  background: #f3f4f6;
+  padding: 2rpx 12rpx;
+  border-radius: 12rpx;
+}
+
+.pet-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.bar-label {
+  font-size: 22rpx;
+  width: 80rpx;
+  color: #6b7280;
+}
+
+.bar-bg {
+  flex: 1;
+  height: 12rpx;
+  background: #e5e7eb;
+  border-radius: 6rpx;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 6rpx;
+  transition: width 0.5s ease;
+}
+
+.bar-fill.mood {
+  background: linear-gradient(90deg, #fbbf24, #f59e0b);
+}
+
+.bar-fill.hunger {
+  background: linear-gradient(90deg, #34d399, #10b981);
+}
+
+.bar-val {
+  font-size: 22rpx;
+  color: #9ca3af;
+  width: 40rpx;
+  text-align: right;
+}
+
+.pet-sick-tip {
+  font-size: 22rpx;
+  color: #ef4444;
+  margin-top: 8rpx;
+}
+
+/* 非会员引导条 */
+.pet-teaser {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border-radius: 16rpx;
+  padding: 20rpx 30rpx;
+  margin-bottom: 24rpx;
+}
+
+.teaser-emoji {
+  font-size: 40rpx;
+  margin-right: 12rpx;
+}
+
+.teaser-text {
+  font-size: 26rpx;
+  color: #92400e;
+  font-weight: 500;
+}
+
+/* ========== 标题区 ========== */
 .header {
   text-align: center;
-  margin-bottom: 80rpx;
+  margin-bottom: 40rpx;
 }
 
 .title {
@@ -121,6 +270,20 @@
   height: 60rpx;
   background-image: linear-gradient(to bottom, transparent 0%, #e5e7eb 50%, transparent 100%);
   margin: 0 20rpx;
+}
+
+/* 补签卡信息条 */
+.makeup-bar {
+  text-align: center;
+  margin: 20rpx 0;
+}
+
+.makeup-text {
+  font-size: 24rpx;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 8rpx 24rpx;
+  border-radius: 20rpx;
 }
 
 .loading {

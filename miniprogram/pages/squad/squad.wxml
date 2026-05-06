@@ -1,0 +1,75 @@
+<view class="container">
+  <view class="page-header">
+    <text class="page-title">打卡小队</text>
+    <text class="page-desc">和好友一起坚持打卡</text>
+  </view>
+
+  <!-- 已有小队 -->
+  <view wx:if="{{hasSquad && squad}}" class="squad-card">
+    <view class="squad-name">{{squad.name}}</view>
+    <view class="squad-code">邀请码：{{squad.code}}</view>
+    <view class="squad-stats">
+      <view class="stat-item">
+        <text class="stat-val">{{squad.current_streak}}</text>
+        <text class="stat-label">连续全勤</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-val">{{squad.max_streak}}</text>
+        <text class="stat-label">最高记录</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-val">{{squad.members.length}}</text>
+        <text class="stat-label">成员数</text>
+      </view>
+    </view>
+
+    <!-- 今日全勤状态 -->
+    <view class="all-check-status {{squad.all_checked_today ? 'all-done' : ''}}">
+      <text wx:if="{{squad.all_checked_today}}">🎉 今日全员打卡完成！</text>
+      <text wx:else>⏳ 还有人没打卡哦</text>
+    </view>
+
+    <!-- 成员列表 -->
+    <view class="member-list">
+      <view wx:for="{{squad.members}}" wx:key="user_id" class="member-row">
+        <view class="member-avatar {{item.checked_today ? 'checked' : ''}}">
+          <text>{{item.checked_today ? '✅' : '⭕'}}</text>
+        </view>
+        <text class="member-id">{{item.user_id.substring(0, 8)}}...{{item.is_owner ? ' 👑' : ''}}</text>
+        <text class="member-status">{{item.checked_today ? '已打卡' : '未打卡'}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 无小队 -->
+  <view wx:if="{{!hasSquad}}" class="no-squad">
+    <text class="no-squad-emoji">🏠</text>
+    <text class="no-squad-text">你还没有加入小队</text>
+    <text class="no-squad-sub">创建或加入一个小队，和好友互相监督打卡</text>
+
+    <view class="action-btns">
+      <button class="action-btn primary" bindtap="toggleCreate" wx:if="{{isMember}}">创建小队</button>
+      <button class="action-btn secondary" bindtap="toggleJoin">加入小队</button>
+    </view>
+
+    <view wx:if="{{!isMember}}" class="member-tip">
+      <text>💡 创建小队需要开通会员</text>
+    </view>
+
+    <!-- 创建面板 -->
+    <view wx:if="{{showCreate}}" class="input-panel">
+      <input class="input-field" placeholder="输入小队名称（最多20字）" maxlength="20" value="{{squadName}}" bindinput="onNameInput" />
+      <button class="action-btn primary small" bindtap="handleCreate">确认创建</button>
+    </view>
+
+    <!-- 加入面板 -->
+    <view wx:if="{{showJoin}}" class="input-panel">
+      <input class="input-field" placeholder="输入6位邀请码" maxlength="6" value="{{inviteCode}}" bindinput="onCodeInput" />
+      <button class="action-btn secondary small" bindtap="handleJoin">确认加入</button>
+    </view>
+  </view>
+
+  <view wx:if="{{loading}}" class="loading">
+    <text>加载中...</text>
+  </view>
+</view>

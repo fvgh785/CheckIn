@@ -1,9 +1,42 @@
 <view class="container">
+  <!-- 宠物展示区（会员可见） -->
+  <view wx:if="{{isMember && pet}}" class="pet-section">
+    <view class="pet-card">
+      <view class="pet-avatar {{pet.is_sick ? 'sick' : ''}} {{hasChecked ? 'happy' : ''}}">
+        <text class="pet-emoji">{{pet.stage == 1 ? '🥚' : pet.stage == 2 ? (pet.pet_type == 'dog' ? '🐶' : pet.pet_type == 'bunny' ? '🐰' : pet.pet_type == 'panda' ? '🐼' : '🐱') : pet.stage == 3 ? (pet.pet_type == 'dog' ? '🐕' : pet.pet_type == 'bunny' ? '🐇' : pet.pet_type == 'panda' ? '🧸' : '😺') : (pet.pet_type == 'dog' ? '🦮' : pet.pet_type == 'bunny' ? '🐰✨' : pet.pet_type == 'panda' ? '🐼👑' : '🐱‍👤')}}</text>
+      </view>
+      <view class="pet-info">
+        <view class="pet-name">{{pet.pet_name}} <text class="pet-stage">Lv.{{pet.stage}} {{pet.stage_name}}</text></view>
+        <view class="pet-bars">
+          <view class="bar-row">
+            <text class="bar-label">❤️心情</text>
+            <view class="bar-bg"><view class="bar-fill mood" style="width: {{pet.mood}}%"></view></view>
+            <text class="bar-val">{{pet.mood}}</text>
+          </view>
+          <view class="bar-row">
+            <text class="bar-label">🍖饱腹</text>
+            <view class="bar-bg"><view class="bar-fill hunger" style="width: {{pet.hunger}}%"></view></view>
+            <text class="bar-val">{{pet.hunger}}</text>
+          </view>
+        </view>
+        <view wx:if="{{pet.is_sick}}" class="pet-sick-tip">😷 宠物生病了，连续打卡3天可恢复</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 非会员宠物引导 -->
+  <view wx:if="{{isLoggedIn && !isMember}}" class="pet-teaser" bindtap="handleGoMembership">
+    <text class="teaser-emoji">🥚</text>
+    <text class="teaser-text">开通会员，领养你的专属宠物 →</text>
+  </view>
+
+  <!-- 日期标题 -->
   <view class="header">
     <text class="title">每日打卡</text>
     <text class="date">{{today}}</text>
   </view>
 
+  <!-- 打卡按钮 -->
   <view class="checkin-section">
     <view class="checkin-btn {{hasChecked ? 'checked' : ''}}" bindtap="handleCheckIn">
       <text wx:if="{{!hasChecked}}" class="btn-text">打卡</text>
@@ -14,6 +47,12 @@
     </view>
   </view>
 
+  <!-- 补签卡信息（会员可见） -->
+  <view wx:if="{{isMember && makeupInfo}}" class="makeup-bar">
+    <text class="makeup-text">🩹 补签卡：剩余 {{makeupInfo.remaining}}/{{makeupInfo.limit}} 张</text>
+  </view>
+
+  <!-- 数据面板 -->
   <view class="data-panel">
     <view class="data-item {{!isLoggedIn ? 'blur' : ''}}">
       <view class="data-value">{{isLoggedIn ? stats.currentStreak : '--'}}</view>

@@ -1,0 +1,41 @@
+<view class="container">
+  <view class="page-header">
+    <text class="page-title">心愿清单</text>
+    <text class="page-desc">为自己设定奖励目标</text>
+  </view>
+
+  <view class="wish-list">
+    <view wx:for="{{wishes}}" wx:key="id" class="wish-card {{item.status == 1 ? 'achieved' : ''}}">
+      <view class="wish-progress-ring">
+        <view class="ring-bg">
+          <view class="ring-fill" style="--pct: {{item.progress_pct}}"></view>
+          <text class="ring-text">{{item.progress_pct}}%</text>
+        </view>
+      </view>
+      <view class="wish-info">
+        <text class="wish-content">{{item.content}}</text>
+        <text class="wish-progress">{{item.current_days}}/{{item.target_days}} 天</text>
+        <text wx:if="{{item.status == 1}}" class="wish-done">🎉 已达成</text>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{wishes.length == 0 && !loading}}" class="empty">
+    <text class="empty-emoji">🎯</text>
+    <text class="empty-text">还没有心愿</text>
+    <text class="empty-sub">设置一个奖励目标，让打卡更有动力</text>
+  </view>
+
+  <button class="create-btn" bindtap="toggleCreate">+ 新建心愿</button>
+
+  <view wx:if="{{showCreate}}" class="create-panel">
+    <input class="input-field" placeholder="输入心愿内容（如：奖励自己一顿大餐）" maxlength="100" value="{{content}}" bindinput="onContentInput" />
+    <view class="days-picker">
+      <text class="days-label">目标天数：</text>
+      <slider min="7" max="365" value="{{targetDays}}" bindchange="onDaysChange" show-value />
+    </view>
+    <button class="submit-btn" bindtap="handleCreate">确认创建</button>
+  </view>
+
+  <view wx:if="{{loading}}" class="loading"><text>加载中...</text></view>
+</view>

@@ -1,0 +1,208 @@
+.container {
+  padding: 40rpx;
+  min-height: 100vh;
+  background: #f8f9fa;
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: 40rpx;
+}
+
+.page-title {
+  font-size: 44rpx;
+  font-weight: 800;
+  color: #1a1a1a;
+  display: block;
+}
+
+.page-desc {
+  font-size: 26rpx;
+  color: #888;
+  margin-top: 8rpx;
+}
+
+.squad-card {
+  background: white;
+  border-radius: 24rpx;
+  padding: 36rpx;
+  box-shadow: 0 8rpx 30rpx rgba(0, 0, 0, 0.04);
+}
+
+.squad-name {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #1a1a1a;
+  text-align: center;
+}
+
+.squad-code {
+  text-align: center;
+  font-size: 24rpx;
+  color: #3b82f6;
+  background: #eff6ff;
+  padding: 8rpx 20rpx;
+  border-radius: 12rpx;
+  margin: 16rpx auto;
+  display: inline-block;
+  width: fit-content;
+}
+
+.squad-stats {
+  display: flex;
+  justify-content: space-around;
+  margin: 30rpx 0;
+  padding: 24rpx 0;
+  border-top: 1rpx solid #f3f4f6;
+  border-bottom: 1rpx solid #f3f4f6;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-val {
+  font-size: 48rpx;
+  font-weight: 800;
+  color: #3b82f6;
+  display: block;
+}
+
+.stat-label {
+  font-size: 22rpx;
+  color: #9ca3af;
+}
+
+.all-check-status {
+  text-align: center;
+  padding: 16rpx;
+  border-radius: 12rpx;
+  background: #fef3c7;
+  font-size: 26rpx;
+  color: #92400e;
+  margin-bottom: 24rpx;
+}
+
+.all-check-status.all-done {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.member-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.member-row {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 20rpx;
+  background: #f9fafb;
+  border-radius: 12rpx;
+}
+
+.member-avatar {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16rpx;
+  font-size: 24rpx;
+}
+
+.member-id {
+  flex: 1;
+  font-size: 26rpx;
+  color: #374151;
+}
+
+.member-status {
+  font-size: 24rpx;
+  color: #9ca3af;
+}
+
+.no-squad {
+  text-align: center;
+  padding: 80rpx 40rpx;
+}
+
+.no-squad-emoji {
+  font-size: 80rpx;
+  display: block;
+  margin-bottom: 20rpx;
+}
+
+.no-squad-text {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #374151;
+  display: block;
+}
+
+.no-squad-sub {
+  font-size: 24rpx;
+  color: #9ca3af;
+  display: block;
+  margin-top: 8rpx;
+}
+
+.action-btns {
+  display: flex;
+  gap: 20rpx;
+  justify-content: center;
+  margin-top: 40rpx;
+}
+
+.action-btn {
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  padding: 20rpx 48rpx;
+  border: none;
+}
+
+.action-btn.primary {
+  background: #3b82f6;
+  color: white;
+}
+
+.action-btn.secondary {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.action-btn.small {
+  padding: 16rpx 32rpx;
+  margin-top: 0;
+}
+
+.member-tip {
+  margin-top: 20rpx;
+  font-size: 24rpx;
+  color: #f59e0b;
+}
+
+.input-panel {
+  margin-top: 30rpx;
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 0 20rpx;
+}
+
+.input-field {
+  flex: 1;
+  border: 2rpx solid #e5e7eb;
+  border-radius: 12rpx;
+  padding: 18rpx 20rpx;
+  font-size: 28rpx;
+  background: white;
+}
+
+.loading {
+  text-align: center;
+  margin-top: 60rpx;
+  color: #999;
+}

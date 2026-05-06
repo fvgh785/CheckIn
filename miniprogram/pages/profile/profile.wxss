@@ -1,0 +1,50 @@
+.container { padding: 40rpx; min-height: 100vh; background: #f8f9fa; }
+
+.member-card {
+  background: white; border-radius: 24rpx; padding: 36rpx;
+  text-align: center; margin-bottom: 32rpx;
+  box-shadow: 0 8rpx 30rpx rgba(0,0,0,0.04);
+}
+.member-card.active { border: 2rpx solid #fbbf24; background: linear-gradient(135deg, #fffbeb, white); }
+
+.member-badge {
+  font-size: 36rpx; font-weight: 800; display: block; margin-bottom: 16rpx;
+}
+.member-badge.inactive { color: #9ca3af; }
+
+.member-detail { font-size: 26rpx; color: #6b7280; }
+.member-level { display: block; margin-bottom: 4rpx; }
+.member-expire { display: block; }
+
+.member-upgrade { margin-top: 8rpx; }
+.upgrade-text { font-size: 30rpx; color: #f59e0b; font-weight: 600; display: block; }
+.upgrade-desc { font-size: 24rpx; color: #9ca3af; display: block; margin-top: 8rpx; }
+
+.section { margin-bottom: 32rpx; }
+.section-title { font-size: 32rpx; font-weight: 700; color: #1a1a1a; display: block; margin-bottom: 16rpx; }
+
+.pet-info-card {
+  display: flex; align-items: center; background: white;
+  border-radius: 20rpx; padding: 28rpx; box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.03);
+}
+.pet-emoji-large { font-size: 72rpx; margin-right: 24rpx; }
+.pet-detail { flex: 1; }
+.pet-name-text { font-size: 32rpx; font-weight: 700; color: #1a1a1a; display: block; }
+.pet-stage-text { font-size: 24rpx; color: #6b7280; margin-top: 4rpx; display: block; }
+.pet-rename-link { font-size: 24rpx; color: #3b82f6; display: block; margin-top: 8rpx; }
+
+.rename-panel { margin-top: 16rpx; display: flex; gap: 12rpx; }
+.rename-input { flex: 1; border: 2rpx solid #e5e7eb; border-radius: 12rpx; padding: 16rpx; font-size: 28rpx; }
+.rename-btn { background: #3b82f6; color: white; border-radius: 12rpx; font-size: 26rpx; border: none; padding: 16rpx 32rpx; }
+
+.makeup-info { font-size: 28rpx; color: #374151; background: white; border-radius: 16rpx; padding: 24rpx; display: block; }
+
+.menu-list { background: white; border-radius: 20rpx; overflow: hidden; }
+.menu-item {
+  display: flex; align-items: center; padding: 28rpx 24rpx;
+  border-bottom: 1rpx solid #f3f4f6;
+}
+.menu-item:last-child { border-bottom: none; }
+.menu-icon { font-size: 36rpx; margin-right: 20rpx; }
+.menu-text { flex: 1; font-size: 30rpx; color: #1a1a1a; }
+.menu-arrow { font-size: 36rpx; color: #d1d5db; }

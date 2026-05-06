@@ -1,0 +1,31 @@
+<view class="container">
+  <view class="page-header">
+    <text class="page-title">AI 智能周报</text>
+    <text class="page-desc">每周AI分析你的打卡习惯</text>
+  </view>
+
+  <!-- 本周洞察 -->
+  <view wx:if="{{insight}}" class="insight-card current">
+    <view class="card-badge">📊 本周洞察</view>
+    <text class="insight-content">{{insight.content}}</text>
+  </view>
+
+  <view wx:if="{{!insight && !loading}}" class="empty-card">
+    <text class="empty-emoji">🤖</text>
+    <text class="empty-text">本周洞察将在周日自动生成</text>
+    <text class="empty-sub">坚持打卡，AI教练会给你专属建议</text>
+  </view>
+
+  <!-- 历史洞察 -->
+  <view wx:if="{{insights.length > 0}}" class="history-section">
+    <text class="section-title">历史周报</text>
+    <view wx:for="{{insights}}" wx:key="id" class="insight-card history">
+      <text class="history-date">{{item.week_start}} 周</text>
+      <text class="insight-content">{{item.content}}</text>
+    </view>
+  </view>
+
+  <view wx:if="{{loading}}" class="loading">
+    <text>加载中...</text>
+  </view>
+</view>

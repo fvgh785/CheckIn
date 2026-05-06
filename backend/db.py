@@ -76,6 +76,106 @@ def init_db():
                     FOREIGN KEY (user_id) REFERENCES users(id)
                 )
             ''')
+            # === 会员体系新增表 ===
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS memberships (
+                    id VARCHAR(36) PRIMARY KEY,
+                    user_id VARCHAR(36) NOT NULL UNIQUE,
+                    level VARCHAR(20) DEFAULT 'premium',
+                    start_date DATE NOT NULL,
+                    end_date DATE NOT NULL,
+                    status TINYINT DEFAULT 1,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users(id)
+                )
+            ''')
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS pets (
+                    id VARCHAR(36) PRIMARY KEY,
+                    user_id VARCHAR(36) NOT NULL UNIQUE,
+                    pet_type VARCHAR(20) DEFAULT 'cat',
+                    pet_name VARCHAR(30) DEFAULT '小打卡',
+                    stage TINYINT DEFAULT 1,
+                    mood TINYINT DEFAULT 80,
+                    hunger TINYINT DEFAULT 80,
+                    exp INT DEFAULT 0,
+                    last_feed_date DATE,
+                    accessory VARCHAR(200) DEFAULT '',
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users(id)
+                )
+            ''')
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS squads (
+                    id VARCHAR(36) PRIMARY KEY,
+                    name VARCHAR(50) NOT NULL,
+                    owner_id VARCHAR(36) NOT NULL,
+                    code VARCHAR(8) NOT NULL UNIQUE,
+                    max_members TINYINT DEFAULT 5,
+                    current_streak INT DEFAULT 0,
+                    max_streak INT DEFAULT 0,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (owner_id) REFERENCES users(id)
+                )
+            ''')
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS squad_members (
+                    id VARCHAR(36) PRIMARY KEY,
+                    squad_id VARCHAR(36) NOT NULL,
+                    user_id VARCHAR(36) NOT NULL,
+                    joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (squad_id) REFERENCES squads(id),
+                    FOREIGN KEY (user_id) REFERENCES users(id),
+                    UNIQUE KEY unique_squad_user (squad_id, user_id)
+                )
+            ''')
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS wishes (
+                    id VARCHAR(36) PRIMARY KEY,
+                    user_id VARCHAR(36) NOT NULL,
+                    content VARCHAR(200) NOT NULL,
+                    target_days INT NOT NULL,
+                    current_days INT DEFAULT 0,
+                    status TINYINT DEFAULT 0,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    achieved_at DATETIME,
+                    FOREIGN KEY (user_id) REFERENCES users(id)
+                )
+            ''')
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS time_capsules (
+                    id VARCHAR(36) PRIMARY KEY,
+                    user_id VARCHAR(36) NOT NULL,
+                    content TEXT NOT NULL,
+                    target_streak INT NOT NULL,
+                    created_streak INT NOT NULL,
+                    status TINYINT DEFAULT 0,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    opened_at DATETIME,
+                    FOREIGN KEY (user_id) REFERENCES users(id)
+                )
+            ''')
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS ai_insights (
+                    id VARCHAR(36) PRIMARY KEY,
+                    user_id VARCHAR(36) NOT NULL,
+                    week_start DATE NOT NULL,
+                    content TEXT NOT NULL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users(id),
+                    UNIQUE KEY unique_user_week (user_id, week_start)
+                )
+            ''')
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS makeup_cards (
+                    id VARCHAR(36) PRIMARY KEY,
+                    user_id VARCHAR(36) NOT NULL,
+                    used_date DATE NOT NULL,
+                    used_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users(id),
+                    UNIQUE KEY unique_user_makeup_date (user_id, used_date)
+                )
+            ''')
         conn.commit()
         _initialized = True
         _logger.info('MySQL tables initialized')

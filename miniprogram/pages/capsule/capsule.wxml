@@ -1,0 +1,47 @@
+<view class="container">
+  <view class="page-header">
+    <text class="page-title">时光胶囊</text>
+    <text class="page-desc">给未来的自己写一封信</text>
+  </view>
+
+  <view class="capsule-list">
+    <view wx:for="{{capsules}}" wx:key="id" class="capsule-card {{item.status == 1 ? 'opened' : 'sealed'}}">
+      <text class="capsule-emoji">{{item.status == 1 ? '📜' : '🔒'}}</text>
+      <view class="capsule-info">
+        <text class="capsule-preview">{{item.status == 1 ? item.content : item.preview}}</text>
+        <text class="capsule-date">封印于 {{item.created_at}}</text>
+        <text wx:if="{{item.status == 0}}" class="capsule-target">需要连续 {{item.target_streak}} 天打卡解锁</text>
+        <text wx:if="{{item.status == 1}}" class="capsule-opened-date">已于 {{item.opened_at}} 开启</text>
+      </view>
+      <button wx:if="{{item.status == 0}}" class="open-btn" data-id="{{item.id}}" bindtap="handleOpen">开启</button>
+    </view>
+  </view>
+
+  <view wx:if="{{capsules.length == 0 && !loading}}" class="empty">
+    <text class="empty-emoji">⏳</text>
+    <text class="empty-text">还没有时光胶囊</text>
+  </view>
+
+  <button class="create-btn" bindtap="toggleCreate">+ 封印新胶囊</button>
+
+  <view wx:if="{{showCreate}}" class="create-panel">
+    <textarea class="capsule-textarea" placeholder="写给未来自己的信..." maxlength="500" value="{{content}}" bindinput="onContentInput" />
+    <view class="days-picker">
+      <text class="days-label">连续打卡多少天后解锁：</text>
+      <slider min="7" max="365" value="{{targetStreak}}" bindchange="onStreakChange" show-value />
+    </view>
+    <button class="submit-btn" bindtap="handleCreate">封印胶囊</button>
+  </view>
+
+  <!-- 开启弹窗 -->
+  <view wx:if="{{openedCapsule}}" class="modal-mask" bindtap="closeModal">
+    <view class="modal-content" catchtap="">
+      <text class="modal-title">📜 胶囊开启</text>
+      <text class="modal-body">{{openedCapsule.content}}</text>
+      <text class="modal-date">封印于 {{openedCapsule.created_at}}</text>
+      <button class="modal-close" bindtap="closeModal">知道了</button>
+    </view>
+  </view>
+
+  <view wx:if="{{loading}}" class="loading"><text>加载中...</text></view>
+</view>

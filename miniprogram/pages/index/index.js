@@ -9,8 +9,13 @@ Page({
       totalDays: 0
     },
     isLoggedIn: false,
+    isMember: false,
     loading: false,
-    today: ''
+    today: '',
+    // 宠物数据
+    pet: null,
+    // 补签卡
+    makeupInfo: null
   },
 
   onLoad() {
@@ -19,7 +24,6 @@ Page({
   },
 
   onShow() {
-    // 每次页面显示时都检查登录状态，以便处理从登录页返回后的状态更新
     this.checkLoginStatus();
   },
 
@@ -30,23 +34,37 @@ Page({
   },
 
   checkLoginStatus() {
-    // 优先取全局 token，如果没有则去本地存储读取
     const token = app.globalData.token || wx.getStorageSync('token');
-
     if (token) {
       this.setData({ isLoggedIn: true });
-      app.globalData.token = token; // 确保全局数据是最新的
-      this.fetchStats(); // 登录后自动拉取数据
+      app.globalData.token = token;
+      this.fetchAllData();
     } else {
-      // 没有 token 则是未登录状态
-      this.setData({ isLoggedIn: false, stats: { currentStreak: 0, maxStreak: 0, totalDays: 0 } });
+      this.setData({
+        isLoggedIn: false,
+        isMember: false,
+        pet: null,
+        makeupInfo: null,
+        stats: { currentStreak: 0, maxStreak: 0, totalDays: 0 }
+      });
+    }
+  },
+
+  async fetchAllData() {
+    this.setData({ loading: true });
+    try {
+      await Promise.all([
+        this.fetchStats(),
+        this.fetchMembershipStatus()
+      ]);
+    } finally {
+      this.setData({ loading: false });
     }
   },
 
   async fetchStats() {
-    this.setData({ loading: true });
     try {
-      const res = await this.request('/stats');
+      const res = await app.request('/stats');
       this.setData({
         hasChecked: res.has_checked_today,
         stats: {
@@ -56,22 +74,51 @@ Page({
         }
       });
     } catch (e) {
-      // 处理 Token 过期或被篡改的情况
       if (e.statusCode === 401) {
-        wx.removeStorageSync('token');
-        app.globalData.token = '';
-        this.setData({ isLoggedIn: false, hasChecked: false });
-        wx.showToast({ title: '登录已失效', icon: 'none' });
+        app.handleAuthExpired();
+        this.setData({ isLoggedIn: false, hasChecked: false, isMember: false });
       } else {
         console.error('获取统计失败:', e);
       }
-    } finally {
-      this.setData({ loading: false });
+    }
+  },
+
+  async fetchMembershipStatus() {
+    try {
+      const res = await app.request('/membership/status');
+      this.setData({ isMember: res.active });
+      if (res.active) {
+        // 获取宠物数据
+        this.fetchPet();
+        // 获取补签卡信息
+        this.fetchMakeupInfo();
+      }
+    } catch (e) {
+      if (e.statusCode !== 401) {
+        console.error('获取会员状态失败:', e);
+      }
+    }
+  },
+
+  async fetchPet() {
+    try {
+      const res = await app.request('/membership/pet');
+      this.setData({ pet: res });
+    } catch (e) {
+      console.error('获取宠物失败:', e);
+    }
+  },
+
+  async fetchMakeupInfo() {
+    try {
+      const res = await app.request('/checkin/makeup/info');
+      this.setData({ makeupInfo: res });
+    } catch (e) {
+      console.error('获取补签卡信息失败:', e);
     }
   },
 
   async handleCheckIn() {
-    // 未登录则引导去登录
     if (!this.data.isLoggedIn) {
       wx.navigateTo({ url: '/pages/login/login' });
       return;
@@ -85,14 +132,34 @@ Page({
     this.setData({ loading: true });
 
     try {
-      await this.request('/checkin', { method: 'POST' });
+      const res = await app.request('/checkin', { method: 'POST' });
       this.setData({ hasChecked: true });
-      wx.showToast({ title: '打卡成功', icon: 'success' });
+
+      // 处理宠物反馈
+      if (res.pet) {
+        const petResult = res.pet;
+        if (petResult.already_fed) {
+          wx.showToast({ title: '今日已投喂', icon: 'none' });
+        } else {
+          let title = '打卡成功！宠物+心情';
+          if (petResult.level_up) {
+            title = `🎉 宠物进化成${petResult.stage_name}了！`;
+          }
+          wx.showToast({ title, icon: 'success' });
+          // 刷新宠物状态
+          this.fetchPet();
+        }
+      } else {
+        wx.showToast({ title: '打卡成功', icon: 'success' });
+      }
+
       this.fetchStats();
+      if (this.data.isMember) {
+        this.fetchMakeupInfo();
+      }
     } catch (e) {
       if (e.statusCode === 401) {
-        wx.removeStorageSync('token');
-        app.globalData.token = '';
+        app.handleAuthExpired();
         this.setData({ isLoggedIn: false, hasChecked: false });
       } else if (e.statusCode === 409) {
         this.setData({ hasChecked: true });
@@ -105,32 +172,7 @@ Page({
     }
   },
 
-  request(path, options = {}) {
-    return new Promise((resolve, reject) => {
-      // 确保请求带上最新的 token
-      const currentToken = app.globalData.token || wx.getStorageSync('token');
-      if (!currentToken) {
-        reject({ statusCode: 401 });
-        return;
-      }
-
-      wx.request({
-        url: app.globalData.apiBase + path,
-        method: options.method || 'GET',
-        data: options.data || {},
-        header: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentToken}`
-        },
-        success: (res) => {
-          if (res.statusCode >= 200 && res.statusCode < 300) {
-            resolve(res.data);
-          } else {
-            reject(res);
-          }
-        },
-        fail: reject
-      });
-    });
+  handleGoMembership() {
+    wx.switchTab({ url: '/pages/profile/profile' });
   }
 });
