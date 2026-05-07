@@ -114,10 +114,16 @@ def init_db():
                     max_members TINYINT DEFAULT 5,
                     current_streak INT DEFAULT 0,
                     max_streak INT DEFAULT 0,
+                    last_streak_date DATE,
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (owner_id) REFERENCES users(id)
                 )
             ''')
+            # 兼容旧表：添加 last_streak_date 字段
+            try:
+                cur.execute('ALTER TABLE squads ADD COLUMN last_streak_date DATE')
+            except Exception:
+                pass  # 字段已存在
             cur.execute('''
                 CREATE TABLE IF NOT EXISTS squad_members (
                     id VARCHAR(36) PRIMARY KEY,

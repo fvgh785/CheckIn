@@ -72,10 +72,10 @@ def activate_membership(user_id, months):
                         'INSERT INTO memberships (id, user_id, level, start_date, end_date, status) VALUES (%s, %s, %s, %s, %s, 1)',
                         (member_id, user_id, 'premium', start_date, end_date)
                     )
-            conn.commit()
-
             # 同时初始化宠物（如果还没有）
             _ensure_pet_exists(conn, user_id)
+
+            conn.commit()
 
             return {
                 'success': True,
@@ -97,7 +97,7 @@ STAGE_EXP_REQUIRED = {1: 0, 2: 100, 3: 300, 4: 700}  # 进化所需经验
 
 
 def _ensure_pet_exists(conn, user_id):
-    """确保用户有宠物记录"""
+    """确保用户有宠物记录（需调用方commit）"""
     with conn.cursor() as cur:
         cur.execute('SELECT id FROM pets WHERE user_id = %s', (user_id,))
         if not cur.fetchone():
@@ -106,6 +106,21 @@ def _ensure_pet_exists(conn, user_id):
                 'INSERT INTO pets (id, user_id) VALUES (%s, %s)',
                 (pet_id, user_id)
             )
+            return True  # 新创建
+        return False  # 已存在
+
+
+def ensure_pet_exists(user_id):
+    """公开接口：确保用户有宠物记录，自动commit"""
+    init_db()
+    conn = get_connection()
+    try:
+        created = _ensure_pet_exists(conn, user_id)
+        if created:
+            conn.commit()
+        return created
+    finally:
+        conn.close()
 
 
 def get_pet(user_id):
@@ -352,7 +367,7 @@ def join_squad(user_id, code):
 
 
 def get_my_squad(user_id):
-    """获取我的小队信息"""
+    """获取我的小队信息（只读，不更新streak）"""
     init_db()
     conn = get_connection()
     try:
@@ -393,30 +408,70 @@ def get_my_squad(user_id):
                     'is_owner': m['user_id'] == squad['owner_id'],
                 })
 
-            # 更新小队连续全勤天数
-            if all_checked_today:
-                new_streak = squad['current_streak'] + 1
-            else:
-                new_streak = 0
-
-            new_max = max(new_streak, squad['max_streak'])
-            if new_streak != squad['current_streak'] or new_max != squad['max_streak']:
-                cur.execute(
-                    'UPDATE squads SET current_streak = %s, max_streak = %s WHERE id = %s',
-                    (new_streak, new_max, squad['id'])
-                )
-                conn.commit()
-
             return {
                 'id': squad['id'],
                 'name': squad['name'],
                 'code': squad['code'],
                 'owner_id': squad['owner_id'],
-                'current_streak': new_streak,
-                'max_streak': new_max,
+                'current_streak': squad['current_streak'],
+                'max_streak': squad['max_streak'],
                 'all_checked_today': all_checked_today,
                 'members': member_list,
             }
+    finally:
+        conn.close()
+
+
+def update_squad_streaks_for_user(user_id):
+    """用户打卡后，更新其所在小队的连续全勤（每天最多触发一次）"""
+    init_db()
+    conn = get_connection()
+    today = date.today()
+    try:
+        with conn.cursor() as cur:
+            # 查找用户所在的小队
+            cur.execute('''
+                SELECT s.* FROM squads s
+                JOIN squad_members sm ON s.id = sm.squad_id
+                WHERE sm.user_id = %s
+            ''', (user_id,))
+            squads = cur.fetchall()
+
+            for squad in squads:
+                # 今天已经更新过，跳过
+                last_date = squad.get('last_streak_date')
+                if last_date and last_date == today:
+                    continue
+
+                # 获取所有成员的今日打卡状态
+                cur.execute(
+                    'SELECT user_id FROM squad_members WHERE squad_id = %s',
+                    (squad['id'],)
+                )
+                members = [m['user_id'] for m in cur.fetchall()]
+
+                all_checked = True
+                for member_id in members:
+                    cur.execute(
+                        'SELECT id FROM check_ins WHERE user_id = %s AND check_date = %s',
+                        (member_id, today.isoformat())
+                    )
+                    if not cur.fetchone():
+                        all_checked = False
+                        break
+
+                if all_checked:
+                    new_streak = squad['current_streak'] + 1
+                else:
+                    new_streak = 0
+
+                new_max = max(new_streak, squad['max_streak'])
+
+                cur.execute(
+                    'UPDATE squads SET current_streak = %s, max_streak = %s, last_streak_date = %s WHERE id = %s',
+                    (new_streak, new_max, today, squad['id'])
+                )
+            conn.commit()
     finally:
         conn.close()
 

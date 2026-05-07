@@ -5,7 +5,7 @@ from flask import Blueprint, request, jsonify, g
 from middleware.auth import auth_required
 from middleware.membership import membership_required
 from db_membership import (
-    get_membership, get_pet, feed_pet, update_pet_name,
+    get_membership, get_pet, ensure_pet_exists, feed_pet, update_pet_name,
     create_squad, join_squad, get_my_squad,
     create_wish, get_wishes, update_wish_progress,
     create_capsule, get_capsules, open_capsule,
@@ -36,6 +36,7 @@ def handle_membership_status():
 @auth_required
 def handle_get_pet():
     try:
+        ensure_pet_exists(g.user['userId'])
         pet = get_pet(g.user['userId'])
         if not pet:
             return jsonify({'error': '宠物不存在，请先开通会员'}), 404

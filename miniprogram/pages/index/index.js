@@ -105,7 +105,11 @@ Page({
       const res = await app.request('/membership/pet');
       this.setData({ pet: res });
     } catch (e) {
-      console.error('获取宠物失败:', e);
+      // 404/403 表示会员未开通或宠物尚未初始化，静默处理
+      if (e.statusCode !== 404 && e.statusCode !== 403) {
+        console.error('获取宠物失败:', e);
+      }
+      this.setData({ pet: null });
     }
   },
 
