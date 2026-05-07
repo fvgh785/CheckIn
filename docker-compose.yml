@@ -35,3 +35,6 @@ services:
       - DB_NAME=checkin
       - WX_APP_ID=your_wx_appid
       - WX_APP_SECRET=your_wx_appsecret
+      - ADMIN_KEY=your_admin_secret_key
+      # AI_API_KEY is optional for AI insights feature
+      # - AI_API_KEY=sk-your-deepseek-key
