@@ -6,7 +6,7 @@ import {
   CrownOutlined,
   FireOutlined,
 } from '@ant-design/icons';
-import { getDashboard } from '../../services/admin';
+import { getDashboard } from '../services/admin';
 import dayjs from 'dayjs';
 
 const { Title } = Typography;
