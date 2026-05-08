@@ -1,11 +1,4 @@
 <view class="container">
-  <!-- 顶部区域 -->
-  <view class="header-section">
-    <view class="header-glow"></view>
-    <text class="page-title">我的</text>
-    <text class="page-subtitle">个人中心</text>
-  </view>
-
   <!-- 会员状态卡片 -->
   <view class="member-card {{isMember ? 'active' : ''}}">
     <view wx:if="{{isMember}}" class="member-badge">
@@ -36,6 +29,69 @@
         <text class="feature-tag">📊 AI周报</text>
         <text class="feature-tag">⭐ 心愿清单</text>
         <text class="feature-tag">⏳ 时光胶囊</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 邮箱绑定 -->
+  <view class="section">
+    <text class="section-title">📧 邮箱绑定</text>
+
+    <!-- 已绑定 -->
+    <view wx:if="{{emailBound}}" class="email-card bound">
+      <view class="email-bound-info">
+        <text class="email-bound-icon">📧</text>
+        <view class="email-bound-detail">
+          <text class="email-bound-text">{{email}}</text>
+          <text class="email-bound-tag">✓ 已验证</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 未绑定：输入+验证 -->
+    <view wx:else class="email-card">
+      <view class="email-form">
+        <view class="email-input-row">
+          <text class="email-input-icon">📧</text>
+          <input
+            class="email-input"
+            type="text"
+            placeholder="请输入邮箱地址"
+            value="{{email}}"
+            bindinput="onEmailInput"
+            maxlength="50"
+            disabled="{{emailSent}}"
+          />
+        </view>
+
+        <!-- 发送验证码 -->
+        <view wx:if="{{email && !emailSent}}" class="email-send-row">
+          <button class="email-send-btn" bindtap="handleSendEmailCode" loading="{{sendingCode}}" disabled="{{sendingCode}}">
+            发送验证码
+          </button>
+        </view>
+
+        <!-- 验证码输入+提交 -->
+        <view wx:if="{{emailSent}}" class="email-verify-row">
+          <view class="email-input-row">
+            <text class="email-input-icon">🔢</text>
+            <input
+              class="email-input"
+              type="number"
+              placeholder="请输入6位验证码"
+              value="{{emailCode}}"
+              bindinput="onEmailCodeInput"
+              maxlength="6"
+            />
+          </view>
+          <view class="email-verify-actions">
+            <text class="email-countdown" wx:if="{{countdown > 0}}">{{countdown}}秒后可重发</text>
+            <text class="email-resend" wx:else bindtap="handleSendEmailCode">重新发送</text>
+            <button class="email-verify-btn" bindtap="handleBindEmail" loading="{{bindingEmail}}" disabled="{{bindingEmail || emailCode.length < 6}}">
+              验证绑定
+            </button>
+          </view>
+        </view>
       </view>
     </view>
   </view>

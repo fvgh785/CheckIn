@@ -3,7 +3,7 @@ import logging
 import traceback
 from flask import Blueprint, request, jsonify, g
 import requests
-from db import login, update_user_profile
+from db import login, update_user_profile, get_user_profile, save_email_verification_code, verify_email_code, bind_email_to_user, generate_email_code, send_verification_email
 from middleware.auth import auth_required
 
 auth_bp = Blueprint('auth', __name__)
@@ -15,9 +15,9 @@ APP_SECRET = os.environ.get('WX_APP_SECRET', '')
 
 @auth_bp.route('/login', methods=['POST'])
 def handle_login():
+    """微信一键登录（无需手机号）"""
     data = request.get_json(silent=True) or {}
     code = data.get('code', '')
-    phone_code = data.get('phone_code', '').strip()
 
     if not code:
         return jsonify({'error': '缺少登录凭证'}), 400
@@ -47,121 +47,92 @@ def handle_login():
         _logger.error(f'login failed for openid={result.get("openid")}: {traceback.format_exc()}')
         return jsonify({'error': '服务器内部错误'}), 500
 
-    # 如果提供了 phone_code，在登录同时完成手机号获取
-    phone = session.get('phone', '')
-    if phone_code and not phone:
-        try:
-            token_resp = requests.get(
-                'https://api.weixin.qq.com/cgi-bin/token'
-                f'?grant_type=client_credential&appid={APP_ID}&secret={APP_SECRET}',
-                timeout=10
-            )
-            token_data = token_resp.json()
-            access_token = token_data.get('access_token')
-            if access_token:
-                phone_resp = requests.post(
-                    f'https://api.weixin.qq.com/wxa/business/getuserphonenumber?access_token={access_token}',
-                    json={'code': phone_code},
-                    timeout=10
-                )
-                phone_data = phone_resp.json()
-                if phone_data.get('errcode') == 0:
-                    phone_info = phone_data.get('phone_info', {})
-                    phone_number = phone_info.get('purePhoneNumber', '')
-                    if phone_number:
-                        update_user_profile(result['openid'], phone=phone_number)
-                        phone = phone_number
-        except Exception:
-            _logger.warning(f'Phone exchange during login failed: {traceback.format_exc()}')
-
     return jsonify({
         'token': session['token'],
         'user_id': session['user_id'],
-        'phone': phone,
         'nickname': session.get('nickname', ''),
+        'email': session.get('email', ''),
     })
 
 
-@auth_bp.route('/exchange-phone', methods=['POST'])
+@auth_bp.route('/profile', methods=['GET'])
 @auth_required
-def handle_exchange_phone():
-    """微信小程序手机号换号接口"""
-    data = request.get_json(silent=True) or {}
-    phone_code = data.get('phone_code', '').strip()
-
-    if not phone_code:
-        return jsonify({'error': '缺少手机号凭证'}), 400
-
-    # 获取 access_token
+def handle_get_profile():
+    """获取当前用户资料（昵称、邮箱）"""
     try:
-        token_resp = requests.get(
-            'https://api.weixin.qq.com/cgi-bin/token'
-            f'?grant_type=client_credential&appid={APP_ID}&secret={APP_SECRET}',
-            timeout=10
-        )
-        token_data = token_resp.json()
-        access_token = token_data.get('access_token')
-        if not access_token:
-            _logger.error(f'Failed to get access_token: {token_data}')
-            return jsonify({'error': '获取微信凭证失败'}), 500
+        profile = get_user_profile(g.user['openId'])
+        return jsonify(profile)
     except Exception:
-        _logger.error(f'WeChat token API request failed: {traceback.format_exc()}')
-        return jsonify({'error': '请求微信服务器失败'}), 500
-
-    # 换取手机号
-    try:
-        phone_resp = requests.post(
-            f'https://api.weixin.qq.com/wxa/business/getuserphonenumber?access_token={access_token}',
-            json={'code': phone_code},
-            timeout=10
-        )
-        phone_data = phone_resp.json()
-        if phone_data.get('errcode') != 0:
-            _logger.error(f'Failed to get phone: {phone_data}')
-            return jsonify({'error': '获取手机号失败', 'detail': phone_data.get('errmsg', '')}), 400
-
-        phone_info = phone_data.get('phone_info', {})
-        phone = phone_info.get('purePhoneNumber', '')
-        if not phone:
-            return jsonify({'error': '未获取到手机号'}), 400
-
-        # 更新用户手机号
-        result = update_user_profile(g.user['openId'], phone=phone)
-        if result['success']:
-            return jsonify({'success': True, 'phone': phone})
-        return jsonify(result), 400
-    except Exception:
-        _logger.error(f'Phone exchange failed: {traceback.format_exc()}')
+        _logger.error(f'get profile failed: {traceback.format_exc()}')
         return jsonify({'error': '服务器内部错误'}), 500
+
+
+@auth_bp.route('/send-email-code', methods=['POST'])
+@auth_required
+def handle_send_email_code():
+    """发送邮箱验证码"""
+    data = request.get_json(silent=True) or {}
+    email = data.get('email', '').strip()
+
+    if not email:
+        return jsonify({'error': '请输入邮箱地址'}), 400
+
+    # 邮箱格式校验
+    import re
+    if not re.match(r'^[^\s@]+@[^\s@]+\.[^\s@]+$', email):
+        return jsonify({'error': '邮箱格式不正确'}), 400
+
+    # 生成并保存验证码
+    code = generate_email_code()
+    if not save_email_verification_code(email, code):
+        return jsonify({'error': '验证码生成失败，请稍后重试'}), 500
+
+    # 发送邮件
+    if not send_verification_email(email, code):
+        _logger.warning(f'Failed to send verification email to {email}')
+        return jsonify({'error': '邮件发送失败，请检查邮箱地址或稍后重试'}), 500
+
+    return jsonify({'success': True, 'message': '验证码已发送'})
+
+
+@auth_bp.route('/bind-email', methods=['POST'])
+@auth_required
+def handle_bind_email():
+    """验证邮箱验证码并绑定"""
+    data = request.get_json(silent=True) or {}
+    email = data.get('email', '').strip()
+    code = data.get('code', '').strip()
+
+    if not email or not code:
+        return jsonify({'error': '缺少邮箱或验证码'}), 400
+
+    # 验证码校验
+    if not verify_email_code(email, code):
+        return jsonify({'error': '验证码错误或已过期'}), 400
+
+    # 绑定邮箱
+    result = bind_email_to_user(g.user['openId'], email)
+    if result['success']:
+        return jsonify(result)
+    return jsonify(result), 400
 
 
 @auth_bp.route('/update-profile', methods=['POST'])
 @auth_required
 def handle_update_profile():
-    """更新用户昵称和/或手机号"""
+    """更新用户昵称"""
     data = request.get_json(silent=True) or {}
     nickname = data.get('nickname', '').strip()
-    phone = data.get('phone', '').strip()
 
-    if not nickname and not phone:
-        return jsonify({'error': '缺少更新内容'}), 400
-    if nickname and len(nickname) > 50:
+    if not nickname:
+        return jsonify({'error': '缺少昵称'}), 400
+    if len(nickname) > 50:
         return jsonify({'error': '昵称最长50个字符'}), 400
 
-    # 校验手机号格式
-    import re
-    if phone and not re.match(r'^1[3-9]\d{9}$', phone):
-        return jsonify({'error': '手机号格式不正确'}), 400
-
     try:
-        result = update_user_profile(g.user['openId'], nickname=nickname or None, phone=phone or None)
+        result = update_user_profile(g.user['openId'], nickname=nickname)
         if result['success']:
-            resp = {'success': True}
-            if nickname:
-                resp['nickname'] = nickname
-            if phone:
-                resp['phone'] = phone
-            return jsonify(resp)
+            return jsonify({'success': True, 'nickname': nickname})
         return jsonify(result), 400
     except Exception:
         _logger.error(f'Update profile failed: {traceback.format_exc()}')

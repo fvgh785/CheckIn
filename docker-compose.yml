@@ -10,7 +10,7 @@ services:
       MYSQL_PASSWORD: checkin123
       TZ: Asia/Shanghai
     volumes:
-      - ./data/mysql:/var/lib/mysql
+      - /data/mysql:/var/lib/mysql
       - ./backend/conf/my.conf:/etc/mysql/conf.d/my.cnf
     command: --default-authentication-plugin=mysql_native_password
     healthcheck:
@@ -41,6 +41,13 @@ services:
       - ADMIN_JWT_SECRET=your-jwt-secret-change-in-production
       - ADMIN_DEFAULT_USERNAME=admin
       - ADMIN_DEFAULT_PASSWORD=admin123
+      # SMTP 邮箱验证码配置（网易163邮箱示例，其他邮箱改 SMTP_HOST/SMTP_PORT）
+      # 163: smtp.163.com:465  126: smtp.126.com:465  yeah: smtp.yeah.net:465  QQ: smtp.qq.com:465
+      - SMTP_HOST=smtp.163.com
+      - SMTP_PORT=465
+      - SMTP_USER=your_email@163.com
+      - SMTP_PASSWORD=your_smtp_auth_code
+      - SMTP_FROM_NAME=每日打卡
       # AI_API_KEY is optional for AI insights feature
       # - AI_API_KEY=sk-your-deepseek-key
 

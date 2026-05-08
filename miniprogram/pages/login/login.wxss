@@ -333,8 +333,35 @@
   text-align: center;
 }
 
-/* 手机号只读展示 */
-.phone-display {
+/* ========== 邮箱绑定 ========== */
+.email-section {
+  width: 100%;
+  margin-bottom: 20rpx;
+}
+
+.section-divider {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+
+.section-divider::before,
+.section-divider::after {
+  content: '';
+  flex: 1;
+  height: 1rpx;
+  background: #e5e7eb;
+}
+
+.divider-text {
+  padding: 0 24rpx;
+  font-size: 24rpx;
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+/* 邮箱已绑定展示 */
+.email-display {
   width: 100%;
   display: flex;
   align-items: center;
@@ -348,21 +375,111 @@
   box-sizing: border-box;
 }
 
-.phone-display-icon {
+.email-display-icon {
   font-size: 28rpx;
 }
 
-.phone-display-text {
+.email-display-text {
   font-size: 28rpx;
   font-weight: 600;
   color: #1a1a2e;
-  letter-spacing: 2rpx;
+  letter-spacing: 1rpx;
 }
 
-.phone-display-check {
+.email-display-check {
   font-size: 22rpx;
   color: #16a34a;
   font-weight: 500;
+}
+
+.email-bind-form {
+  width: 100%;
+}
+
+/* 发送验证码按钮 */
+.send-code-row {
+  width: 100%;
+  margin-bottom: 20rpx;
+}
+
+.send-code-btn {
+  width: 100%;
+  height: 72rpx;
+  line-height: 72rpx;
+  border-radius: 20rpx;
+  background: #eef2ff;
+  color: #4f46e5;
+  font-size: 26rpx;
+  font-weight: 500;
+  border: 1rpx solid rgba(79, 70, 229, 0.15);
+  padding: 0;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+.send-code-btn::after { border: none; }
+
+.send-code-btn:active {
+  background: #e0e7ff;
+}
+
+.send-code-btn[disabled] {
+  background: #f3f4f6;
+  color: #9ca3af;
+  border-color: #e5e7eb;
+}
+
+/* 验证码区域 */
+.verify-code-row {
+  width: 100%;
+}
+
+.verify-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16rpx;
+  gap: 20rpx;
+}
+
+.countdown-text {
+  font-size: 24rpx;
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.resend-link {
+  font-size: 24rpx;
+  color: #4f46e5;
+  flex-shrink: 0;
+}
+
+.verify-submit-btn {
+  flex: 1;
+  height: 72rpx;
+  line-height: 72rpx;
+  border-radius: 20rpx;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  color: #ffffff;
+  font-size: 26rpx;
+  font-weight: 600;
+  border: none;
+  padding: 0;
+  box-shadow: 0 6rpx 18rpx rgba(79, 70, 229, 0.25);
+  white-space: nowrap;
+}
+
+.verify-submit-btn::after { border: none; }
+
+.verify-submit-btn:active {
+  transform: scale(0.97);
+  opacity: 0.9;
+}
+
+.verify-submit-btn[disabled] {
+  background: #e5e7eb;
+  color: #9ca3af;
+  box-shadow: none;
 }
 
 /* 底部按钮组 */

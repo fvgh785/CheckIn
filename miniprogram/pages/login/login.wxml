@@ -21,32 +21,25 @@
     <view class="login-section" wx:if="{{!loggedIn}}">
       <button
         class="login-btn"
-        open-type="getPhoneNumber"
-        bindgetphonenumber="handleLoginWithPhone"
+        bindtap="handleLogin"
         loading="{{loading}}"
         disabled="{{loading}}"
       >
         <text class="login-btn-icon">🔐</text>
         <text>微信一键登录</text>
       </button>
-      <text class="tips">点击按钮授权登录，手机号仅用于账号安全</text>
+      <text class="tips">点击按钮授权登录，无需手机号</text>
     </view>
 
-    <!-- 已登录状态：昵称可选完善 -->
+    <!-- 已登录状态：完善资料 -->
     <view class="profile-section" wx:if="{{loggedIn}}">
       <view class="step-indicator">
         <view class="step-dot active"></view>
-        <view class="step-dot active"></view>
+        <view class="step-dot {{emailSent ? 'active' : ''}}"></view>
+        <view class="step-dot {{emailBound ? 'active' : ''}}"></view>
       </view>
       <text class="profile-title">完善资料</text>
-      <text class="profile-desc">设置昵称，让伙伴们认识你</text>
-
-      <!-- 已获取手机号显示 -->
-      <view wx:if="{{phone}}" class="phone-display">
-        <text class="phone-display-icon">📱</text>
-        <text class="phone-display-text">{{phone}}</text>
-        <text class="phone-display-check">✓ 已授权</text>
-      </view>
+      <text class="profile-desc">设置昵称，绑定邮箱更方便</text>
 
       <!-- 昵称输入（可选） -->
       <view class="input-group">
@@ -60,6 +53,69 @@
             bindinput="onNicknameInput"
             maxlength="20"
           />
+        </view>
+      </view>
+
+      <!-- 邮箱绑定（可选） -->
+      <view class="email-section">
+        <view class="section-divider">
+          <text class="divider-text">绑定邮箱（可选）</text>
+        </view>
+
+        <!-- 邮箱已绑定展示 -->
+        <view wx:if="{{emailBound}}" class="email-display">
+          <text class="email-display-icon">📧</text>
+          <text class="email-display-text">{{email}}</text>
+          <text class="email-display-check">✓ 已绑定</text>
+        </view>
+
+        <!-- 邮箱未绑定：输入+验证 -->
+        <view wx:else class="email-bind-form">
+          <view class="input-group">
+            <view class="input-wrapper">
+              <text class="input-icon">📧</text>
+              <input
+                class="nickname-input"
+                type="text"
+                placeholder="请输入邮箱地址"
+                value="{{email}}"
+                bindinput="onEmailInput"
+                maxlength="50"
+                disabled="{{emailSent}}"
+              />
+            </view>
+          </view>
+
+          <!-- 发送验证码/倒计时 -->
+          <view wx:if="{{email && !emailSent}}" class="send-code-row">
+            <button class="send-code-btn" bindtap="handleSendEmailCode" loading="{{sendingCode}}" disabled="{{sendingCode}}">
+              <text>发送验证码</text>
+            </button>
+          </view>
+
+          <!-- 验证码输入+提交 -->
+          <view wx:if="{{emailSent}}" class="verify-code-row">
+            <view class="input-group">
+              <view class="input-wrapper">
+                <text class="input-icon">🔢</text>
+                <input
+                  class="nickname-input"
+                  type="number"
+                  placeholder="请输入6位验证码"
+                  value="{{emailCode}}"
+                  bindinput="onEmailCodeInput"
+                  maxlength="6"
+                />
+              </view>
+            </view>
+            <view class="verify-actions">
+              <text class="countdown-text" wx:if="{{countdown > 0}}">{{countdown}}秒后可重发</text>
+              <text class="resend-link" wx:else bindtap="handleSendEmailCode">重新发送</text>
+              <button class="verify-submit-btn" bindtap="handleBindEmail" loading="{{bindingEmail}}" disabled="{{bindingEmail || emailCode.length < 6}}">
+                <text>验证绑定</text>
+              </button>
+            </view>
+          </view>
         </view>
       </view>
 

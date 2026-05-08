@@ -127,7 +127,7 @@ def init_db():
                 cur.execute('ALTER TABLE squads ADD COLUMN last_streak_date DATE')
             except Exception:
                 pass  # 字段已存在
-            # 兼容旧表：添加 phone / nickname 字段
+            # 兼容旧表：添加 phone / nickname / email 字段
             try:
                 cur.execute('ALTER TABLE users ADD COLUMN phone VARCHAR(20) DEFAULT \'\'')
             except Exception:
@@ -136,6 +136,20 @@ def init_db():
                 cur.execute('ALTER TABLE users ADD COLUMN nickname VARCHAR(50) DEFAULT \'\'')
             except Exception:
                 pass
+            try:
+                cur.execute('ALTER TABLE users ADD COLUMN email VARCHAR(100) DEFAULT \'\'')
+            except Exception:
+                pass
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS email_verification_codes (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    email VARCHAR(100) NOT NULL,
+                    code VARCHAR(6) NOT NULL,
+                    expires_at DATETIME NOT NULL,
+                    used TINYINT DEFAULT 0,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
             cur.execute('''
                 CREATE TABLE IF NOT EXISTS squad_members (
                     id VARCHAR(36) PRIMARY KEY,
@@ -275,7 +289,7 @@ def get_or_create_user(open_id):
                     (user_id, open_id)
                 )
                 conn.commit()
-                return {'id': user_id, 'open_id': open_id, 'phone': '', 'nickname': ''}
+                return {'id': user_id, 'open_id': open_id, 'phone': '', 'nickname': '', 'email': ''}
             except pymysql.err.IntegrityError:
                 # Race condition: another request created this user concurrently
                 cur.execute('SELECT * FROM users WHERE open_id = %s', (open_id,))
@@ -284,8 +298,8 @@ def get_or_create_user(open_id):
         conn.close()
 
 
-def update_user_profile(open_id, phone=None, nickname=None):
-    """更新用户手机号和昵称"""
+def update_user_profile(open_id, phone=None, nickname=None, email=None):
+    """更新用户资料（手机号、昵称、邮箱）"""
     init_db()
     conn = get_connection()
     try:
@@ -303,15 +317,37 @@ def update_user_profile(open_id, phone=None, nickname=None):
             if nickname is not None and nickname:
                 updates.append('nickname = %s')
                 params.append(nickname)
+            if email is not None and email:
+                updates.append('email = %s')
+                params.append(email)
 
             if not updates:
                 return {'success': False, 'message': '无更新内容'}
 
             params.append(open_id)
-            sql = f'UPDATE users SET {', '.join(updates)} WHERE open_id = %s'
+            set_clause = ', '.join(updates)
+            sql = f'UPDATE users SET {set_clause} WHERE open_id = %s'
             cur.execute(sql, params)
             conn.commit()
             return {'success': True, 'message': '资料更新成功'}
+    finally:
+        conn.close()
+
+
+def get_user_profile(open_id):
+    """获取用户资料（昵称、邮箱）"""
+    init_db()
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT nickname, email FROM users WHERE open_id = %s', (open_id,))
+            row = cur.fetchone()
+            if row:
+                return {
+                    'nickname': row.get('nickname', ''),
+                    'email': row.get('email', ''),
+                }
+            return {'nickname': '', 'email': ''}
     finally:
         conn.close()
 
@@ -359,6 +395,7 @@ def login(open_id):
         'user_id': user['id'],
         'phone': user.get('phone', ''),
         'nickname': user.get('nickname', ''),
+        'email': user.get('email', ''),
     }
 
 
@@ -392,6 +429,154 @@ def logout(token):
             conn.commit()
     finally:
         conn.close()
+
+
+# ======================== 邮箱验证码 ========================
+
+import random
+
+
+def save_email_verification_code(email, code):
+    """保存邮箱验证码，有效期5分钟"""
+    init_db()
+    conn = get_connection()
+    try:
+        from datetime import timedelta
+        expires_at = datetime.now() + timedelta(minutes=5)
+        with conn.cursor() as cur:
+            cur.execute(
+                'INSERT INTO email_verification_codes (email, code, expires_at) VALUES (%s, %s, %s)',
+                (email, code, expires_at)
+            )
+            conn.commit()
+        return True
+    except Exception:
+        _logger.error(f'save_email_verification_code failed: {traceback.format_exc()}')
+        return False
+    finally:
+        conn.close()
+
+
+def verify_email_code(email, code):
+    """验证邮箱验证码，成功返回True并标记已使用"""
+    init_db()
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                '''SELECT * FROM email_verification_codes
+                   WHERE email = %s AND code = %s AND used = 0 AND expires_at > %s
+                   ORDER BY created_at DESC LIMIT 1''',
+                (email, code, datetime.now())
+            )
+            row = cur.fetchone()
+            if not row:
+                return False
+            # 标记为已使用
+            cur.execute(
+                'UPDATE email_verification_codes SET used = 1 WHERE id = %s',
+                (row['id'],)
+            )
+            conn.commit()
+            return True
+    except Exception:
+        _logger.error(f'verify_email_code failed: {traceback.format_exc()}')
+        return False
+    finally:
+        conn.close()
+
+
+def bind_email_to_user(open_id, email):
+    """将邮箱绑定到用户"""
+    init_db()
+    conn = get_connection()
+    try:
+        # 检查邮箱是否已被其他用户绑定
+        with conn.cursor() as cur:
+            cur.execute(
+                'SELECT id FROM users WHERE email = %s AND open_id != %s',
+                (email, open_id)
+            )
+            if cur.fetchone():
+                return {'success': False, 'message': '该邮箱已被其他账号绑定'}
+
+            cur.execute(
+                'UPDATE users SET email = %s WHERE open_id = %s',
+                (email, open_id)
+            )
+            conn.commit()
+            return {'success': True, 'message': '邮箱绑定成功'}
+    except Exception:
+        _logger.error(f'bind_email_to_user failed: {traceback.format_exc()}')
+        return {'success': False, 'message': '绑定失败，请稍后重试'}
+    finally:
+        conn.close()
+
+
+def generate_email_code():
+    """生成6位数字验证码"""
+    return ''.join(str(random.randint(0, 9)) for _ in range(6))
+
+
+def send_verification_email(email, code):
+    """
+    发送验证码邮件
+    支持网易系(163/126/yeah)、QQ邮箱等国内主流邮箱
+    网易邮箱SMTP配置：
+      - SMTP服务器: smtp.163.com (126: smtp.126.com, yeah: smtp.yeah.net, QQ: smtp.qq.com)
+      - 端口: 465 (SSL) 或 25
+      - 需在邮箱设置中开启SMTP服务并获取授权码
+    """
+    import smtplib
+    from email.mime.text import MIMEText
+    from email.mime.multipart import MIMEMultipart
+
+    smtp_host = os.environ.get('SMTP_HOST', 'smtp.163.com')
+    smtp_port = int(os.environ.get('SMTP_PORT', '465'))
+    smtp_user = os.environ.get('SMTP_USER', '')
+    smtp_password = os.environ.get('SMTP_PASSWORD', '')
+    smtp_from_name = os.environ.get('SMTP_FROM_NAME', '每日打卡')
+
+    if not smtp_user or not smtp_password:
+        _logger.error('SMTP_USER or SMTP_PASSWORD not configured')
+        return False
+
+    msg = MIMEMultipart()
+    msg['From'] = f'{smtp_from_name} <{smtp_user}>'
+    msg['To'] = email
+    msg['Subject'] = '每日打卡 - 邮箱验证码'
+
+    html_body = f'''
+    <div style="max-width:500px;margin:0 auto;padding:30px;font-family:Arial,sans-serif;">
+        <div style="text-align:center;margin-bottom:30px;">
+            <h1 style="color:#3b82f6;margin:0;">📅 每日打卡</h1>
+        </div>
+        <div style="background:#f8f9fa;border-radius:12px;padding:30px;text-align:center;">
+            <p style="color:#6b7280;font-size:14px;margin:0 0 20px;">您的邮箱验证码为：</p>
+            <div style="font-size:36px;font-weight:bold;color:#1a1a2e;letter-spacing:8px;margin-bottom:20px;">{code}</div>
+            <p style="color:#9ca3af;font-size:12px;margin:0;">验证码5分钟内有效，请勿泄露</p>
+        </div>
+        <p style="color:#9ca3af;font-size:12px;text-align:center;margin-top:20px;">
+            如非本人操作，请忽略此邮件
+        </p>
+    </div>
+    '''
+    msg.attach(MIMEText(html_body, 'html', 'utf-8'))
+
+    try:
+        if smtp_port == 465:
+            server = smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=10)
+        else:
+            server = smtplib.SMTP(smtp_host, smtp_port, timeout=10)
+            server.starttls()
+        server.login(smtp_user, smtp_password)
+        server.sendmail(smtp_user, email, msg.as_string())
+        server.quit()
+        _logger.info(f'Verification email sent to {email}')
+        return True
+    except Exception:
+        _logger.error(f'Send email to {email} failed: {traceback.format_exc()}')
+        return False
 
 
 def check_in_by_user_id(user_id, check_date_str=None):

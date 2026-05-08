@@ -5,42 +5,23 @@ Page({
     loading: false,
     loggedIn: false,
     nickname: '',
-    phone: '',
-    saving: false
+    email: '',
+    emailCode: '',
+    emailSent: false,
+    emailBound: false,
+    countdown: 0,
+    sendingCode: false,
+    bindingEmail: false,
+    saving: false,
+    _countdownTimer: null
   },
 
   /**
-   * 一键登录：open-type="getPhoneNumber" 触发
-   * 微信弹出手机号授权 → 用户同意 → 同时获取登录code和手机号code
+   * 一键登录：纯微信登录，无需手机号
    */
-  handleLoginWithPhone(e) {
-    const { code: phoneCode, errMsg } = e.detail;
-
-    // 用户拒绝手机号授权
-    if (errMsg && errMsg.includes('fail')) {
-      wx.showModal({
-        title: '需要手机号授权',
-        content: '手机号是账号安全的基础，请授权后登录。重试请再次点击按钮。',
-        showCancel: false,
-        confirmText: '知道了'
-      });
-      return;
-    }
-
-    // 开发工具/模拟器不支持 getPhoneNumber
-    if (!phoneCode) {
-      wx.showModal({
-        title: '提示',
-        content: '手机号授权需要在真机上操作。请使用真机预览或体验版测试。',
-        showCancel: false,
-        confirmText: '知道了'
-      });
-      return;
-    }
-
+  handleLogin() {
     this.setData({ loading: true });
 
-    // 获取登录凭证
     wx.login({
       success: (res) => {
         if (!res.code) {
@@ -48,8 +29,7 @@ Page({
           this.setData({ loading: false });
           return;
         }
-        // 一次请求同时完成登录和手机号换取
-        this.loginWithPhone(res.code, phoneCode);
+        this.doLogin(res.code);
       },
       fail: () => {
         wx.showToast({ title: '登录失败', icon: 'error' });
@@ -58,33 +38,32 @@ Page({
     });
   },
 
-  loginWithPhone(code, phoneCode) {
+  doLogin(code) {
     wx.request({
       url: app.globalData.apiBase.replace('/api', '') + '/api/auth/login',
       method: 'POST',
-      data: { code, phone_code: phoneCode },
+      data: { code },
       header: { 'Content-Type': 'application/json' },
       success: (res) => {
         if (res.statusCode === 200 && res.data.token) {
           wx.setStorageSync('token', res.data.token);
           app.globalData.token = res.data.token;
 
-          const phone = res.data.phone || '';
           const nickname = res.data.nickname || '';
+          const email = res.data.email || '';
 
           this.setData({
             loading: false,
             loggedIn: true,
-            phone: phone,
-            nickname: nickname
+            nickname: nickname,
+            email: email,
+            emailBound: !!email
           });
 
-          // 手机号已获取 + 昵称已有 → 直接进入首页
-          if (phone && nickname) {
+          // 已有昵称 → 直接进入首页
+          if (nickname) {
             this.goToIndex();
           }
-          // 手机号已获取但无昵称 → 停留完善资料页，手机号只读展示
-          // phone 存在则自动显示 "✓ 已授权"
         } else {
           wx.showToast({ title: res.data.error || '登录失败', icon: 'error' });
           this.setData({ loading: false });
@@ -101,12 +80,105 @@ Page({
     this.setData({ nickname: e.detail.value });
   },
 
+  onEmailInput(e) {
+    this.setData({ email: e.detail.value.trim() });
+  },
+
+  onEmailCodeInput(e) {
+    this.setData({ emailCode: e.detail.value });
+  },
+
+  /**
+   * 发送邮箱验证码
+   */
+  handleSendEmailCode() {
+    const { email } = this.data;
+    if (!email) {
+      wx.showToast({ title: '请输入邮箱地址', icon: 'none' });
+      return;
+    }
+    // 简单邮箱格式校验
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      wx.showToast({ title: '邮箱格式不正确', icon: 'none' });
+      return;
+    }
+
+    this.setData({ sendingCode: true });
+
+    app.request('/auth/send-email-code', {
+      method: 'POST',
+      data: { email }
+    }).then(() => {
+      wx.showToast({ title: '验证码已发送', icon: 'success' });
+      this.setData({ emailSent: true, sendingCode: false, emailCode: '' });
+      this.startCountdown();
+    }).catch((err) => {
+      const msg = (err && err.data && err.data.error) || '发送失败';
+      wx.showToast({ title: msg, icon: 'none' });
+      this.setData({ sendingCode: false });
+    });
+  },
+
+  /**
+   * 验证码倒计时
+   */
+  startCountdown() {
+    this.setData({ countdown: 60 });
+    const timer = setInterval(() => {
+      const countdown = this.data.countdown - 1;
+      if (countdown <= 0) {
+        clearInterval(timer);
+        this.setData({ countdown: 0 });
+      } else {
+        this.setData({ countdown });
+      }
+    }, 1000);
+    this.data._countdownTimer = timer;
+  },
+
+  /**
+   * 绑定邮箱（验证码校验）
+   */
+  handleBindEmail() {
+    const { email, emailCode } = this.data;
+    if (!emailCode || emailCode.length < 6) {
+      wx.showToast({ title: '请输入6位验证码', icon: 'none' });
+      return;
+    }
+
+    this.setData({ bindingEmail: true });
+
+    app.request('/auth/bind-email', {
+      method: 'POST',
+      data: { email, code: emailCode }
+    }).then(() => {
+      wx.showToast({ title: '邮箱绑定成功', icon: 'success' });
+      this.setData({
+        emailBound: true,
+        bindingEmail: false,
+        emailCode: '',
+        emailSent: false
+      });
+    }).catch((err) => {
+      const msg = (err && err.data && err.data.error) || '绑定失败';
+      wx.showToast({ title: msg, icon: 'none' });
+      this.setData({ bindingEmail: false });
+    });
+  },
+
   handleGoBack() {
-    // 返回登录初始状态
+    // 清除倒计时
+    if (this.data._countdownTimer) {
+      clearInterval(this.data._countdownTimer);
+    }
     this.setData({
       loggedIn: false,
       nickname: '',
-      phone: '',
+      email: '',
+      emailCode: '',
+      emailSent: false,
+      emailBound: false,
+      countdown: 0,
       saving: false
     });
   },
@@ -122,7 +194,7 @@ Page({
 
     this.setData({ saving: true });
 
-    app.request('/api/auth/update-profile', {
+    app.request('/auth/update-profile', {
       method: 'POST',
       data: { nickname: nickname.trim() }
     }).then(() => {
@@ -139,5 +211,11 @@ Page({
 
   goToIndex() {
     wx.reLaunch({ url: '/pages/index/index' });
+  },
+
+  onUnload() {
+    if (this.data._countdownTimer) {
+      clearInterval(this.data._countdownTimer);
+    }
   }
 });

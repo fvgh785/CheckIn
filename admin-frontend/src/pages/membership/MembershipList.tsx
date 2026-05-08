@@ -12,6 +12,7 @@ interface Membership {
   open_id: string;
   phone: string;
   nickname: string;
+  email: string;
   level: string;
   start_date: string;
   end_date: string;
@@ -97,6 +98,7 @@ export default function MembershipList() {
     { title: 'User ID', dataIndex: 'user_id', key: 'user_id', width: 120, ellipsis: true },
     { title: 'Open ID', dataIndex: 'open_id', key: 'open_id', ellipsis: true },
     { title: '手机号', dataIndex: 'phone', key: 'phone', width: 120, render: (v: string) => v || '-' },
+    { title: '邮箱', dataIndex: 'email', key: 'email', width: 160, render: (v: string) => v || '-' },
     { title: '昵称', dataIndex: 'nickname', key: 'nickname', width: 100, render: (v: string) => v || '-' },
     { title: '等级', dataIndex: 'level', key: 'level', width: 80 },
     { title: '开始日期', dataIndex: 'start_date', key: 'start_date', width: 110 },

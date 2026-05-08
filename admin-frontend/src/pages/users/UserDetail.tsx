@@ -12,6 +12,7 @@ interface UserDetailData {
   open_id: string;
   phone: string;
   nickname: string;
+  email: string;
   created_at: string;
   stats: {
     has_checked_today: boolean;
@@ -69,6 +70,7 @@ export default function UserDetail() {
           <Descriptions.Item label="User ID">{user.user_id}</Descriptions.Item>
           <Descriptions.Item label="Open ID">{user.open_id}</Descriptions.Item>
           <Descriptions.Item label="手机号">{user.phone || '-'}</Descriptions.Item>
+          <Descriptions.Item label="邮箱">{user.email || '-'}</Descriptions.Item>
           <Descriptions.Item label="昵称">{user.nickname || '-'}</Descriptions.Item>
           <Descriptions.Item label="注册时间">{dayjs(user.created_at).format('YYYY-MM-DD HH:mm:ss')}</Descriptions.Item>
           <Descriptions.Item label="今日打卡">

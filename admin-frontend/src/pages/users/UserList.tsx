@@ -12,6 +12,7 @@ interface User {
   open_id: string;
   phone: string;
   nickname: string;
+  email: string;
   created_at: string;
   total_checkins: number;
   is_member: boolean;
@@ -58,6 +59,7 @@ export default function UserList() {
     { title: 'User ID', dataIndex: 'user_id', key: 'user_id', width: 120, ellipsis: true },
     { title: 'Open ID', dataIndex: 'open_id', key: 'open_id', ellipsis: true },
     { title: '手机号', dataIndex: 'phone', key: 'phone', width: 120, render: (v: string) => v || '-' },
+    { title: '邮箱', dataIndex: 'email', key: 'email', width: 160, render: (v: string) => v || '-' },
     { title: '昵称', dataIndex: 'nickname', key: 'nickname', width: 100, render: (v: string) => v || '-' },
     { title: '注册时间', dataIndex: 'created_at', key: 'created_at', width: 180,
       render: (v: string) => dayjs(v).format('YYYY-MM-DD HH:mm') },
@@ -85,7 +87,7 @@ export default function UserList() {
     <div>
       <Title level={4}>用户管理</Title>
       <Input
-        placeholder="搜索 Open ID / 手机号 / 昵称..."
+        placeholder="搜索 Open ID / 手机号 / 昵称 / 邮箱..."
         prefix={<SearchOutlined />}
         value={keyword}
         onChange={(e) => { setKeyword(e.target.value); setPage(1); }}

@@ -141,24 +141,24 @@ def handle_user_list():
             with conn.cursor() as cur:
                 if keyword:
                     cur.execute(
-                        'SELECT COUNT(*) as total FROM users WHERE open_id LIKE %s OR phone LIKE %s OR nickname LIKE %s',
-                        (f'%{keyword}%', f'%{keyword}%', f'%{keyword}%')
+                        'SELECT COUNT(*) as total FROM users WHERE open_id LIKE %s OR phone LIKE %s OR nickname LIKE %s OR email LIKE %s',
+                        (f'%{keyword}%', f'%{keyword}%', f'%{keyword}%', f'%{keyword}%')
                     )
                     total = cur.fetchone()['total']
                     cur.execute(
-                        '''SELECT u.id, u.open_id, u.phone, u.nickname, u.created_at,
+                        '''SELECT u.id, u.open_id, u.phone, u.nickname, u.email, u.created_at,
                                   (SELECT COUNT(*) FROM check_ins WHERE user_id = u.id) as total_checkins,
                                   (SELECT COUNT(*) FROM memberships WHERE user_id = u.id AND status = 1 AND end_date >= %s) as is_member
                            FROM users u
-                           WHERE u.open_id LIKE %s OR u.phone LIKE %s OR u.nickname LIKE %s
+                           WHERE u.open_id LIKE %s OR u.phone LIKE %s OR u.nickname LIKE %s OR u.email LIKE %s
                            ORDER BY u.created_at DESC LIMIT %s OFFSET %s''',
-                        (date.today(), f'%{keyword}%', f'%{keyword}%', f'%{keyword}%', page_size, offset)
+                        (date.today(), f'%{keyword}%', f'%{keyword}%', f'%{keyword}%', f'%{keyword}%', page_size, offset)
                     )
                 else:
                     cur.execute('SELECT COUNT(*) as total FROM users')
                     total = cur.fetchone()['total']
                     cur.execute(
-                        '''SELECT u.id, u.open_id, u.phone, u.nickname, u.created_at,
+                        '''SELECT u.id, u.open_id, u.phone, u.nickname, u.email, u.created_at,
                                   (SELECT COUNT(*) FROM check_ins WHERE user_id = u.id) as total_checkins,
                                   (SELECT COUNT(*) FROM memberships WHERE user_id = u.id AND status = 1 AND end_date >= %s) as is_member
                            FROM users u
@@ -171,6 +171,7 @@ def handle_user_list():
                     'open_id': r['open_id'][:20] + '...' if len(r['open_id']) > 20 else r['open_id'],
                     'phone': r.get('phone', ''),
                     'nickname': r.get('nickname', ''),
+                    'email': r.get('email', ''),
                     'created_at': str(r['created_at']),
                     'total_checkins': r['total_checkins'],
                     'is_member': bool(r['is_member']),
@@ -214,6 +215,7 @@ def handle_user_detail(user_id):
                     'open_id': user['open_id'],
                     'phone': user.get('phone', ''),
                     'nickname': user.get('nickname', ''),
+                    'email': user.get('email', ''),
                     'created_at': str(user['created_at']),
                     'stats': stats,
                     'membership': membership,
@@ -244,7 +246,7 @@ def handle_membership_list():
                 cur.execute('SELECT COUNT(*) as total FROM memberships')
                 total = cur.fetchone()['total']
                 cur.execute(
-                    '''SELECT m.*, u.open_id, u.phone, u.nickname
+                    '''SELECT m.*, u.open_id, u.phone, u.nickname, u.email
                        FROM memberships m
                        JOIN users u ON m.user_id = u.id
                        ORDER BY m.created_at DESC LIMIT %s OFFSET %s''',
@@ -257,6 +259,7 @@ def handle_membership_list():
                     'open_id': r['open_id'][:20] + '...' if len(r['open_id']) > 20 else r['open_id'],
                     'phone': r.get('phone', ''),
                     'nickname': r.get('nickname', ''),
+                    'email': r.get('email', ''),
                     'level': r['level'],
                     'start_date': str(r['start_date']),
                     'end_date': str(r['end_date']),
