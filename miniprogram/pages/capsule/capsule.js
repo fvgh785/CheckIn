@@ -67,8 +67,14 @@ Page({
         this.loadData();
       }
     } catch (e) {
-      if (e.data && e.data.error) {
-        wx.showToast({ title: e.data.error, icon: 'none' });
+      if (e.statusCode === 401) {
+        app.handleAuthExpired();
+      } else if (e.statusCode === 403) {
+        wx.showToast({ title: '该功能需要会员', icon: 'none' });
+      } else if (e.data && e.data.message) {
+        wx.showToast({ title: e.data.message, icon: 'none' });
+      } else {
+        wx.showToast({ title: '开启失败，请稍后重试', icon: 'none' });
       }
     }
   },

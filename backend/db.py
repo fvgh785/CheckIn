@@ -14,11 +14,14 @@ DB_CONFIG = {
     'host': os.environ.get('DB_HOST', 'mysql'),
     'port': int(os.environ.get('DB_PORT', 3306)),
     'user': os.environ.get('DB_USER', 'checkin'),
-    'password': os.environ.get('DB_PASSWORD', 'checkin123'),
+    'password': os.environ.get('DB_PASSWORD'),
     'database': os.environ.get('DB_NAME', 'checkin'),
     'charset': 'utf8mb4',
     'cursorclass': pymysql.cursors.DictCursor,
 }
+
+if not DB_CONFIG['password']:
+    raise RuntimeError('DB_PASSWORD environment variable is required')
 
 _logger = logging.getLogger(__name__)
 _initialized = False
@@ -182,6 +185,64 @@ def init_db():
                     UNIQUE KEY unique_user_makeup_date (user_id, used_date)
                 )
             ''')
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS admins (
+                    id VARCHAR(36) PRIMARY KEY,
+                    username VARCHAR(50) NOT NULL UNIQUE,
+                    password_hash VARCHAR(255) NOT NULL,
+                    role VARCHAR(20) DEFAULT 'admin',
+                    status TINYINT DEFAULT 1,
+                    token_version INT DEFAULT 0,
+                    locked_until DATETIME,
+                    failed_attempts INT DEFAULT 0,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            # 兼容旧表：添加 token_version / locked_until / failed_attempts 字段
+            for col in ['token_version', 'locked_until', 'failed_attempts']:
+                try:
+                    if col == 'token_version':
+                        cur.execute(f'ALTER TABLE admins ADD COLUMN {col} INT DEFAULT 0')
+                    elif col == 'locked_until':
+                        cur.execute(f'ALTER TABLE admins ADD COLUMN {col} DATETIME')
+                    else:
+                        cur.execute(f'ALTER TABLE admins ADD COLUMN {col} INT DEFAULT 0')
+                except Exception:
+                    pass  # 字段已存在
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS admin_logs (
+                    id VARCHAR(36) PRIMARY KEY,
+                    admin_id VARCHAR(36) NOT NULL,
+                    action VARCHAR(50) NOT NULL,
+                    target_type VARCHAR(50) NOT NULL,
+                    target_id VARCHAR(36),
+                    detail TEXT,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (admin_id) REFERENCES admins(id)
+                )
+            ''')
+            # 初始化默认超级管理员（必须通过环境变量设置凭据）
+            try:
+                from werkzeug.security import generate_password_hash
+                default_username = os.environ.get('ADMIN_DEFAULT_USERNAME')
+                default_password = os.environ.get('ADMIN_DEFAULT_PASSWORD')
+                if not default_username or not default_password:
+                    _logger.warning(
+                        'ADMIN_DEFAULT_USERNAME and ADMIN_DEFAULT_PASSWORD env vars not set. '
+                        'Default super admin will NOT be created. Use admin management API to create admins.'
+                    )
+                else:
+                    cur.execute('SELECT id FROM admins WHERE username = %s', (default_username,))
+                    if not cur.fetchone():
+                        admin_id = str(uuid.uuid4())
+                        pw_hash = generate_password_hash(default_password)
+                        cur.execute(
+                            'INSERT INTO admins (id, username, password_hash, role) VALUES (%s, %s, %s, %s)',
+                            (admin_id, default_username, pw_hash, 'super_admin')
+                        )
+                        _logger.info(f'Default super admin created: {default_username}')
+            except Exception as e:
+                _logger.warning(f'Failed to create default admin: {e}')
         conn.commit()
         _initialized = True
         _logger.info('MySQL tables initialized')
@@ -266,7 +327,7 @@ def logout(token):
         conn.close()
 
 
-def check_in_by_user_id(user_id):
+def check_in_by_user_id(user_id, check_date_str=None):
     init_db()
     conn = get_connection()
     try:
@@ -274,7 +335,7 @@ def check_in_by_user_id(user_id):
             cur.execute('SELECT id FROM users WHERE id = %s', (user_id,))
             if not cur.fetchone():
                 return {'success': False, 'message': '用户不存在'}
-        today_str = date.today().isoformat()
+        today_str = check_date_str or date.today().isoformat()
         check_id = str(uuid.uuid4())
         try:
             with conn.cursor() as cur:

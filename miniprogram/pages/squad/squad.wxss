@@ -194,11 +194,15 @@
 
 .input-field {
   flex: 1;
-  border: 2rpx solid #e5e7eb;
-  border-radius: 12rpx;
-  padding: 18rpx 20rpx;
-  font-size: 28rpx;
-  background: white;
+  border: 2rpx solid #d1d5db;
+  border-radius: 16rpx;
+  padding: 24rpx 28rpx;
+  font-size: 32rpx;
+  background: #fafbfc;
+}
+.input-field:focus {
+  border-color: #3b82f6;
+  background: #fff;
 }
 
 .loading {

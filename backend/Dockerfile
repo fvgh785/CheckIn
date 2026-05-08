@@ -11,6 +11,8 @@ RUN pip install --no-cache-dir --default-timeout=1000 --retries 10 -r requiremen
 COPY app.py ./
 COPY db.py ./
 COPY db_membership.py ./
+COPY db_admin.py ./
+COPY limiter.py ./
 COPY ai_insight.py ./
 COPY scheduler.py ./
 COPY middleware/ ./middleware/

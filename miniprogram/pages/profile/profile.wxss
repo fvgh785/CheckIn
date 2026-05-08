@@ -34,7 +34,7 @@
 .pet-rename-link { font-size: 24rpx; color: #3b82f6; display: block; margin-top: 8rpx; }
 
 .rename-panel { margin-top: 16rpx; display: flex; gap: 12rpx; }
-.rename-input { flex: 1; border: 2rpx solid #e5e7eb; border-radius: 12rpx; padding: 16rpx; font-size: 28rpx; }
+.rename-input { flex: 1; border: 2rpx solid #d1d5db; border-radius: 16rpx; padding: 24rpx 28rpx; font-size: 32rpx; background: #fafbfc; } .rename-input:focus { border-color: #3b82f6; background: #fff; }
 .rename-btn { background: #3b82f6; color: white; border-radius: 12rpx; font-size: 26rpx; border: none; padding: 16rpx 32rpx; }
 
 .makeup-info { font-size: 28rpx; color: #374151; background: white; border-radius: 16rpx; padding: 24rpx; display: block; }

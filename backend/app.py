@@ -6,9 +6,11 @@ from routes.checkin import checkin_bp
 from routes.membership import membership_bp
 from routes.admin import admin_bp
 from scheduler import start_scheduler
+from limiter import limiter
 
 app = Flask(__name__)
 CORS(app)
+limiter.init_app(app)
 
 app.register_blueprint(auth_bp, url_prefix='/api/auth')
 app.register_blueprint(checkin_bp, url_prefix='/api')
