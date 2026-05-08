@@ -730,7 +730,8 @@ def handle_update_pet(pet_id):
                 return jsonify({'error': '无更新内容'}), 400
 
             params.append(pet_id)
-            sql = f'UPDATE pets SET {\", \".join(updates)} WHERE id = %s'
+            set_clause = ', '.join(updates)
+            sql = f'UPDATE pets SET {set_clause} WHERE id = %s'
             cur.execute(sql, params)
             conn.commit()
             write_admin_log(g.admin['id'], 'update', 'pet', pet['user_id'], f'修改宠物: {_sanitize_detail(data)}')
