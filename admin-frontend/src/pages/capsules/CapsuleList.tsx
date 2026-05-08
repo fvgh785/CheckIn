@@ -27,8 +27,8 @@ export default function CapsuleList() {
   };
 
   const columns = [
-    { title: 'User ID', dataIndex: 'user_id', key: 'user_id', width: 120, ellipsis: true },
-    { title: 'Open ID', dataIndex: 'open_id', key: 'open_id', ellipsis: true },
+    { title: 'User ID', dataIndex: 'user_id', key: 'user_id', width: 180, ellipsis: true },
+    { title: 'Open ID', dataIndex: 'open_id', key: 'open_id', width: 160, ellipsis: true },
     { title: '内容预览', dataIndex: 'content', key: 'content', ellipsis: true },
     { title: '目标/已打卡', key: 'streak', width: 100, render: (_: unknown, r: Capsule) => `${r.target_streak}/${r.created_streak}天` },
     { title: '状态', dataIndex: 'status_text', key: 'status_text', width: 80, render: (v: string) => v === '已开启' ? <Tag color="green">{v}</Tag> : <Tag color="orange">{v}</Tag> },
@@ -40,6 +40,7 @@ export default function CapsuleList() {
     <div>
       <Title level={4}>时光胶囊管理</Title>
       <Table dataSource={data} columns={columns} rowKey="id" loading={loading}
+        scroll={{ x: 'max-content' }}
         pagination={{ current: page, total, pageSize: 20, onChange: (p) => setPage(p), showTotal: (t) => `共 ${t} 条` }} />
     </div>
   );

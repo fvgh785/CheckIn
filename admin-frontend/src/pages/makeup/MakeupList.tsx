@@ -22,8 +22,8 @@ export default function MakeupList() {
   };
 
   const columns = [
-    { title: 'User ID', dataIndex: 'user_id', key: 'user_id', width: 120, ellipsis: true },
-    { title: 'Open ID', dataIndex: 'open_id', key: 'open_id', ellipsis: true },
+    { title: 'User ID', dataIndex: 'user_id', key: 'user_id', width: 180, ellipsis: true },
+    { title: 'Open ID', dataIndex: 'open_id', key: 'open_id', width: 160, ellipsis: true },
     { title: '补签日期', dataIndex: 'used_date', key: 'used_date', width: 120 },
     { title: '使用时间', dataIndex: 'used_at', key: 'used_at', width: 170, render: (v: string) => dayjs(v).format('YYYY-MM-DD HH:mm:ss') },
   ];
@@ -32,6 +32,7 @@ export default function MakeupList() {
     <div>
       <Title level={4}>补签记录</Title>
       <Table dataSource={data} columns={columns} rowKey="id" loading={loading}
+        scroll={{ x: 'max-content' }}
         pagination={{ current: page, total, pageSize: 20, onChange: (p) => setPage(p), showTotal: (t) => `共 ${t} 条` }} />
     </div>
   );

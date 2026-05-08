@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Layout, Menu, Button, Dropdown, theme, Modal, Input, App as AntApp } from 'antd';
+import { Layout, Menu, Button, Dropdown, theme, Modal, Input, App } from 'antd';
 import {
   DashboardOutlined,
   UserOutlined,
@@ -54,6 +54,7 @@ export default function MainLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { token: themeToken } = theme.useToken();
+  const { message } = App.useApp();
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [oldPw, setOldPw] = useState('');
   const [newPw, setNewPw] = useState('');
@@ -85,7 +86,7 @@ export default function MainLayout() {
     if (!oldPw || !newPw) return;
     try {
       await changePassword(oldPw, newPw);
-      AntApp.useApp().message.success('密码修改成功');
+      message.success('密码修改成功');
       setPasswordModalOpen(false);
       setOldPw('');
       setNewPw('');

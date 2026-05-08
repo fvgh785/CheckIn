@@ -51,7 +51,7 @@ export default function SquadList() {
   const columns = [
     { title: '小队名称', dataIndex: 'name', key: 'name' },
     { title: '邀请码', dataIndex: 'code', key: 'code', width: 100 },
-    { title: '队长', dataIndex: 'owner_open_id', key: 'owner_open_id', width: 140, ellipsis: true },
+    { title: '队长', dataIndex: 'owner_open_id', key: 'owner_open_id', width: 160, ellipsis: true },
     { title: '成员', key: 'members', width: 80,
       render: (_: unknown, r: Squad) => `${r.member_count}/${r.max_members}` },
     { title: '当前连胜', dataIndex: 'current_streak', key: 'current_streak', width: 90 },
@@ -70,6 +70,7 @@ export default function SquadList() {
     <div>
       <Title level={4}>小队管理</Title>
       <Table dataSource={data} columns={columns} rowKey="id" loading={loading}
+        scroll={{ x: 'max-content' }}
         pagination={{ current: page, total, pageSize: 20, onChange: (p) => setPage(p), showTotal: (t) => `共 ${t} 个小队` }} />
     </div>
   );

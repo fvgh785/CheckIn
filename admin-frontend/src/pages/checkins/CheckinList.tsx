@@ -65,8 +65,8 @@ export default function CheckinList() {
   };
 
   const columns = [
-    { title: 'User ID', dataIndex: 'user_id', key: 'user_id', width: 120, ellipsis: true },
-    { title: 'Open ID', dataIndex: 'open_id', key: 'open_id', ellipsis: true },
+    { title: 'User ID', dataIndex: 'user_id', key: 'user_id', width: 180, ellipsis: true },
+    { title: 'Open ID', dataIndex: 'open_id', key: 'open_id', width: 160, ellipsis: true },
     { title: '打卡日期', dataIndex: 'check_date', key: 'check_date', width: 120 },
     { title: '打卡时间', dataIndex: 'created_at', key: 'created_at', width: 170,
       render: (v: string) => dayjs(v).format('YYYY-MM-DD HH:mm:ss') },
@@ -90,6 +90,7 @@ export default function CheckinList() {
         <Button icon={<PlusOutlined />} onClick={() => setAddModalOpen(true)}>手动添加打卡</Button>
       </Space>
       <Table dataSource={data} columns={columns} rowKey="id" loading={loading}
+        scroll={{ x: 'max-content' }}
         pagination={{ current: page, total, pageSize: 20, onChange: (p) => setPage(p), showTotal: (t) => `共 ${t} 条` }} />
 
       <Modal title="手动添加打卡" open={addModalOpen} onOk={handleAdd}

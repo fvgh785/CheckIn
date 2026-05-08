@@ -27,8 +27,8 @@ export default function WishList() {
   };
 
   const columns = [
-    { title: 'User ID', dataIndex: 'user_id', key: 'user_id', width: 120, ellipsis: true },
-    { title: 'Open ID', dataIndex: 'open_id', key: 'open_id', ellipsis: true },
+    { title: 'User ID', dataIndex: 'user_id', key: 'user_id', width: 180, ellipsis: true },
+    { title: 'Open ID', dataIndex: 'open_id', key: 'open_id', width: 160, ellipsis: true },
     { title: '心愿内容', dataIndex: 'content', key: 'content', ellipsis: true },
     { title: '进度', key: 'progress', width: 110, render: (_: unknown, r: Wish) => `${r.current_days}/${r.target_days}天` },
     { title: '状态', dataIndex: 'status', key: 'status', width: 80, render: (v: number) => v === 1 ? <Tag color="green">已达成</Tag> : <Tag color="blue">进行中</Tag> },
@@ -40,6 +40,7 @@ export default function WishList() {
     <div>
       <Title level={4}>心愿管理</Title>
       <Table dataSource={data} columns={columns} rowKey="id" loading={loading}
+        scroll={{ x: 'max-content' }}
         pagination={{ current: page, total, pageSize: 20, onChange: (p) => setPage(p), showTotal: (t) => `共 ${t} 条` }} />
     </div>
   );

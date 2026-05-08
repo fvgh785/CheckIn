@@ -95,11 +95,11 @@ export default function MembershipList() {
   };
 
   const columns = [
-    { title: 'User ID', dataIndex: 'user_id', key: 'user_id', width: 120, ellipsis: true },
-    { title: 'Open ID', dataIndex: 'open_id', key: 'open_id', ellipsis: true },
-    { title: '手机号', dataIndex: 'phone', key: 'phone', width: 120, render: (v: string) => v || '-' },
-    { title: '邮箱', dataIndex: 'email', key: 'email', width: 160, render: (v: string) => v || '-' },
-    { title: '昵称', dataIndex: 'nickname', key: 'nickname', width: 100, render: (v: string) => v || '-' },
+    { title: 'User ID', dataIndex: 'user_id', key: 'user_id', width: 180, ellipsis: true },
+    { title: 'Open ID', dataIndex: 'open_id', key: 'open_id', width: 160, ellipsis: true },
+    { title: '手机号', dataIndex: 'phone', key: 'phone', width: 130, render: (v: string) => v || '-' },
+    { title: '邮箱', dataIndex: 'email', key: 'email', width: 180, render: (v: string) => v || '-' },
+    { title: '昵称', dataIndex: 'nickname', key: 'nickname', width: 110, render: (v: string) => v || '-' },
     { title: '等级', dataIndex: 'level', key: 'level', width: 80 },
     { title: '开始日期', dataIndex: 'start_date', key: 'start_date', width: 110 },
     { title: '到期日期', dataIndex: 'end_date', key: 'end_date', width: 110 },
@@ -110,7 +110,7 @@ export default function MembershipList() {
     { title: '开通时间', dataIndex: 'created_at', key: 'created_at', width: 110,
       render: (v: string) => dayjs(v).format('YYYY-MM-DD') },
     {
-      title: '操作', key: 'action', width: 100,
+      title: '操作', key: 'action', width: 110,
       render: (_: unknown, r: Membership) => (
         <Space>
           <a onClick={() => openActivateModal(r.user_id)}>
@@ -133,6 +133,7 @@ export default function MembershipList() {
         按手机号开通会员
       </Button>
       <Table dataSource={data} columns={columns} rowKey="id" loading={loading}
+        scroll={{ x: 'max-content' }}
         pagination={{ current: page, total, pageSize: 20, onChange: (p) => setPage(p), showTotal: (t) => `共 ${t} 条` }} />
 
       <Modal title={activateMode === 'phone' ? '按手机号开通会员' : '开通/续费会员'} open={modalOpen} onOk={handleActivate}

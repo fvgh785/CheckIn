@@ -49,6 +49,7 @@ export default function LogList() {
           options={TARGET_TYPES.map(t => ({ label: t, value: t }))} />
       </Space>
       <Table dataSource={data} columns={columns} rowKey="id" loading={loading}
+        scroll={{ x: 'max-content' }}
         pagination={{ current: page, total, pageSize: 50, onChange: (p) => setPage(p), showTotal: (t) => `共 ${t} 条` }} />
     </div>
   );

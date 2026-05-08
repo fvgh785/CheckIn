@@ -56,20 +56,20 @@ export default function UserList() {
   };
 
   const columns = [
-    { title: 'User ID', dataIndex: 'user_id', key: 'user_id', width: 120, ellipsis: true },
-    { title: 'Open ID', dataIndex: 'open_id', key: 'open_id', ellipsis: true },
-    { title: '手机号', dataIndex: 'phone', key: 'phone', width: 120, render: (v: string) => v || '-' },
-    { title: '邮箱', dataIndex: 'email', key: 'email', width: 160, render: (v: string) => v || '-' },
-    { title: '昵称', dataIndex: 'nickname', key: 'nickname', width: 100, render: (v: string) => v || '-' },
-    { title: '注册时间', dataIndex: 'created_at', key: 'created_at', width: 180,
+    { title: 'User ID', dataIndex: 'user_id', key: 'user_id', width: 180, ellipsis: true },
+    { title: 'Open ID', dataIndex: 'open_id', key: 'open_id', width: 160, ellipsis: true },
+    { title: '手机号', dataIndex: 'phone', key: 'phone', width: 130, render: (v: string) => v || '-' },
+    { title: '邮箱', dataIndex: 'email', key: 'email', width: 180, render: (v: string) => v || '-' },
+    { title: '昵称', dataIndex: 'nickname', key: 'nickname', width: 110, render: (v: string) => v || '-' },
+    { title: '注册时间', dataIndex: 'created_at', key: 'created_at', width: 170,
       render: (v: string) => dayjs(v).format('YYYY-MM-DD HH:mm') },
-    { title: '累计打卡', dataIndex: 'total_checkins', key: 'total_checkins', width: 100 },
+    { title: '累计打卡', dataIndex: 'total_checkins', key: 'total_checkins', width: 90 },
     {
       title: '会员', dataIndex: 'is_member', key: 'is_member', width: 80,
       render: (v: boolean) => v ? <Tag color="gold">会员</Tag> : <Tag>普通</Tag>,
     },
     {
-      title: '操作', key: 'action', width: 160,
+      title: '操作', key: 'action', width: 170,
       render: (_: unknown, record: User) => (
         <Space>
           <a onClick={() => navigate(`/users/${record.user_id}`)}><EyeOutlined /> 详情</a>
@@ -99,6 +99,7 @@ export default function UserList() {
         columns={columns}
         rowKey="user_id"
         loading={loading}
+        scroll={{ x: 'max-content' }}
         pagination={{
           current: page,
           total,

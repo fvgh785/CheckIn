@@ -65,6 +65,7 @@ export default function AdminList() {
       <Title level={4}>管理员管理</Title>
       <Button type="primary" icon={<PlusOutlined />} onClick={openCreate} style={{ marginBottom: 16 }}>新增管理员</Button>
       <Table dataSource={data} columns={columns} rowKey="id" loading={loading}
+        scroll={{ x: 'max-content' }}
         pagination={{ current: page, total, pageSize: 20, onChange: (p) => setPage(p), showTotal: (t) => `共 ${t} 位` }} />
 
       <Modal title={editingAdmin ? '编辑管理员' : '新增管理员'} open={modalOpen} onOk={handleSubmit}
