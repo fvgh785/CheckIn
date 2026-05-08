@@ -1,53 +1,99 @@
 <view class="container">
+  <!-- 顶部区域 -->
+  <view class="header-section">
+    <view class="header-glow"></view>
+    <text class="page-title">我的</text>
+    <text class="page-subtitle">个人中心</text>
+  </view>
+
   <!-- 会员状态卡片 -->
   <view class="member-card {{isMember ? 'active' : ''}}">
-    <view wx:if="{{isMember}}" class="member-badge">✨ 会员</view>
-    <view wx:else class="member-badge inactive">免费用户</view>
+    <view wx:if="{{isMember}}" class="member-badge">
+      <text class="badge-icon">✨</text>
+      <text class="badge-text">会员</text>
+    </view>
+    <view wx:else class="member-badge inactive">
+      <text class="badge-icon">👤</text>
+      <text class="badge-text">免费用户</text>
+    </view>
 
     <view wx:if="{{isMember && membership}}" class="member-detail">
-      <text class="member-level">等级：{{membership.level}}</text>
-      <text class="member-expire">到期：{{membership.end_date}}</text>
+      <view class="detail-item">
+        <text class="detail-label">等级</text>
+        <text class="detail-value">{{membership.level === 'premium' ? '高级会员' : membership.level}}</text>
+      </view>
+      <view class="detail-item">
+        <text class="detail-label">到期</text>
+        <text class="detail-value">{{membership.end_date}}</text>
+      </view>
     </view>
 
     <view wx:if="{{!isMember}}" class="member-upgrade">
-      <text class="upgrade-text">开通会员解锁全部功能</text>
-      <text class="upgrade-desc">宠物养成 · 打卡小队 · AI周报 · 心愿清单 · 时光胶囊</text>
+      <text class="upgrade-title">🚀 开通会员解锁全部功能</text>
+      <view class="feature-tags">
+        <text class="feature-tag">🐾 宠物养成</text>
+        <text class="feature-tag">👥 打卡小队</text>
+        <text class="feature-tag">📊 AI周报</text>
+        <text class="feature-tag">⭐ 心愿清单</text>
+        <text class="feature-tag">⏳ 时光胶囊</text>
+      </view>
     </view>
   </view>
 
   <!-- 宠物信息（会员可见） -->
   <view wx:if="{{isMember && pet}}" class="section">
-    <text class="section-title">我的宠物</text>
-    <view class="pet-info-card">
-      <text class="pet-emoji-large">{{pet.stage == 1 ? '🥚' : pet.stage == 2 ? (pet.pet_type == 'dog' ? '🐶' : pet.pet_type == 'bunny' ? '🐰' : pet.pet_type == 'panda' ? '🐼' : '🐱') : pet.stage == 3 ? (pet.pet_type == 'dog' ? '🐕' : pet.pet_type == 'bunny' ? '🐇' : pet.pet_type == 'panda' ? '🧸' : '😺') : (pet.pet_type == 'dog' ? '🦮' : pet.pet_type == 'bunny' ? '🐰✨' : pet.pet_type == 'panda' ? '🐼👑' : '🐱‍👤')}}</text>
-      <view class="pet-detail">
-        <text class="pet-name-text">{{pet.pet_name}}</text>
-        <text class="pet-stage-text">{{pet.stage_name}} · 经验 {{pet.exp}}</text>
-        <text class="pet-rename-link" bindtap="toggleRename">✏️ 改名</text>
+    <text class="section-title">🐾 我的宠物</text>
+    <view class="pet-card">
+      <view class="pet-avatar">
+        <text class="pet-emoji">{{pet.stage == 1 ? '🥚' : pet.stage == 2 ? (pet.pet_type == 'dog' ? '🐶' : pet.pet_type == 'bunny' ? '🐰' : pet.pet_type == 'panda' ? '🐼' : '🐱') : pet.stage == 3 ? (pet.pet_type == 'dog' ? '🐕' : pet.pet_type == 'bunny' ? '🐇' : pet.pet_type == 'panda' ? '🧸' : '😺') : (pet.pet_type == 'dog' ? '🦮' : pet.pet_type == 'bunny' ? '🐰✨' : pet.pet_type == 'panda' ? '🐼👑' : '🐱‍👤')}}</text>
+      </view>
+      <view class="pet-info">
+        <text class="pet-name">{{pet.pet_name}}</text>
+        <view class="pet-meta">
+          <text class="pet-stage">{{pet.stage_name}}</text>
+          <text class="pet-exp">经验 {{pet.exp}}</text>
+        </view>
+      </view>
+      <view class="pet-action" bindtap="toggleRename">
+        <text>✏️ 改名</text>
       </view>
     </view>
 
     <view wx:if="{{showRename}}" class="rename-panel">
-      <input class="rename-input" placeholder="输入新名字" maxlength="10" value="{{petName}}" bindinput="onPetNameInput" />
+      <input class="rename-input" placeholder="给宠物取个新名字" maxlength="10" value="{{petName}}" bindinput="onPetNameInput" />
       <button class="rename-btn" bindtap="handleRename">确认</button>
     </view>
   </view>
 
   <!-- 补签卡 -->
   <view wx:if="{{isMember && makeupInfo}}" class="section">
-    <text class="section-title">补签卡</text>
-    <text class="makeup-info">剩余 {{makeupInfo.remaining}}/{{makeupInfo.limit}} 张（每月重置）</text>
+    <text class="section-title">🎫 补签卡</text>
+    <view class="makeup-card">
+      <view class="makeup-progress">
+        <view class="makeup-bar-bg">
+          <view class="makeup-bar-fill" style="width: {{makeupInfo.remaining / makeupInfo.limit * 100}}%"></view>
+        </view>
+        <text class="makeup-num">{{makeupInfo.remaining}}/{{makeupInfo.limit}}</text>
+      </view>
+      <text class="makeup-note">每月自动重置额度</text>
+    </view>
   </view>
 
   <!-- 功能入口 -->
   <view class="section">
-    <text class="section-title">功能入口</text>
+    <text class="section-title">⚡ 功能入口</text>
     <view class="menu-list">
       <view class="menu-item" bindtap="goToCapsule">
-        <text class="menu-icon">⏳</text>
+        <view class="menu-icon-box">
+          <text class="menu-icon">⏳</text>
+        </view>
         <text class="menu-text">时光胶囊</text>
+        <text class="menu-desc">记录美好，未来开启</text>
         <text class="menu-arrow">›</text>
       </view>
     </view>
   </view>
+
+  <!-- 底部占位 -->
+  <view class="bottom-space"></view>
 </view>

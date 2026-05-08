@@ -1,47 +1,128 @@
+/* 登录页 - 与全局风格统一的浅色主题 */
 .login-container {
   min-height: 100vh;
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 160rpx 60rpx 120rpx;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx;
   box-sizing: border-box;
-  background-color: #f7f9fb;
+  background: linear-gradient(180deg, #f8f7ff 0%, #f0edff 20%, #f5f5f7 60%, #fafafa 100%);
+  position: relative;
+  overflow: hidden;
 }
 
+/* 背景光晕装饰 */
+.bg-decoration {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.bg-circle {
+  position: absolute;
+  border-radius: 50%;
+}
+
+.bg-circle-1 {
+  width: 400rpx;
+  height: 400rpx;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.08), transparent 70%);
+  top: -80rpx;
+  right: -120rpx;
+}
+
+.bg-circle-2 {
+  width: 320rpx;
+  height: 320rpx;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.06), transparent 70%);
+  bottom: -60rpx;
+  left: -80rpx;
+}
+
+.bg-circle-3 {
+  width: 240rpx;
+  height: 240rpx;
+  background: radial-gradient(circle, rgba(96, 165, 250, 0.05), transparent 70%);
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* 主卡片 */
+.login-card {
+  width: 100%;
+  max-width: 640rpx;
+  background: #ffffff;
+  border-radius: 32rpx;
+  padding: 64rpx 48rpx 56rpx;
+  box-shadow: 0 10rpx 40rpx rgba(0, 0, 0, 0.06), 0 2rpx 8rpx rgba(0, 0, 0, 0.03);
+  border: 1rpx solid rgba(0, 0, 0, 0.04);
+  position: relative;
+  z-index: 1;
+  animation: cardFadeIn 0.6s ease-out;
+}
+
+@keyframes cardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(40rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Logo 区域 */
 .logo-section {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 100rpx;
+  margin-bottom: 56rpx;
 }
 
-.logo {
-  width: 180rpx;
-  height: 180rpx;
-  border-radius: 48rpx;
-  background: white;
+.logo-ring {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(37, 99, 235, 0.04));
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 90rpx;
-  box-shadow: 0 12rpx 32rpx rgba(0, 0, 0, 0.06);
-  margin-bottom: 48rpx;
+  margin-bottom: 36rpx;
+  border: 2rpx solid rgba(59, 130, 246, 0.1);
+}
+
+.logo {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(37, 99, 235, 0.06));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 64rpx;
 }
 
 .app-name {
-  font-size: 48rpx;
+  font-size: 52rpx;
   font-weight: 800;
-  color: #1a1a1a;
-  letter-spacing: 2rpx;
-  margin-bottom: 16rpx;
+  color: #1a1a2e;
+  letter-spacing: 4rpx;
+  margin-bottom: 12rpx;
 }
 
 .app-desc {
-  font-size: 28rpx;
-  color: #888;
-  letter-spacing: 1rpx;
+  font-size: 26rpx;
+  color: #8b8ba0;
+  letter-spacing: 2rpx;
 }
 
+/* 登录区域 */
 .login-section {
   width: 100%;
   display: flex;
@@ -49,46 +130,136 @@
   align-items: center;
 }
 
+/* ========== 统一按钮设计系统 ========== */
+/* 主操作按钮（实心渐变） */
 .login-btn {
   width: 100%;
-  height: 104rpx;
-  line-height: 104rpx;
-  text-align: center;
-  border-radius: 52rpx;
-  background: linear-gradient(145deg, #4A90D9 0%, #2563EB 100%);
-  color: white;
-  font-size: 34rpx;
-  font-weight: bold;
+  height: 96rpx;
+  line-height: 96rpx;
+  border-radius: 24rpx;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #ffffff;
+  font-size: 32rpx;
+  font-weight: 600;
   border: none;
-  box-shadow: 0 16rpx 32rpx rgba(74, 144, 217, 0.35);
-  padding: 0;
-  margin: 0;
-  overflow: hidden;
+  padding: 0 40rpx;
+  box-shadow: 0 8rpx 24rpx rgba(59, 130, 246, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  white-space: nowrap;
 }
 
-.login-btn::after {
-  border: none;
+.login-btn-icon {
+  font-size: 34rpx;
+  flex-shrink: 0;
 }
+
+.login-btn::after { border: none; }
 
 .login-btn:active {
-  transform: scale(0.98);
-  opacity: 0.9;
-  box-shadow: 0 8rpx 16rpx rgba(74, 144, 217, 0.2);
+  transform: scale(0.97);
+  box-shadow: 0 4rpx 16rpx rgba(59, 130, 246, 0.25);
 }
 
 .login-btn[disabled] {
-  background: #e2e8f0;
-  color: #94a3b8;
+  background: #e5e7eb;
+  color: #9ca3af;
   box-shadow: none;
   transform: none;
 }
 
+/* 跳过按钮（幽灵风格） */
+.skip-btn {
+  flex: 1;
+  height: 96rpx;
+  line-height: 96rpx;
+  border-radius: 24rpx;
+  background: #f3f4f6;
+  color: #6b7280;
+  font-size: 28rpx;
+  font-weight: 500;
+  border: 1rpx solid #e5e7eb;
+  padding: 0;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+.skip-btn::after { border: none; }
+
+.skip-btn:active {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+/* 确认按钮（实心渐变） */
+.confirm-btn {
+  flex: 1;
+  height: 96rpx;
+  line-height: 96rpx;
+  border-radius: 24rpx;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #ffffff;
+  font-size: 28rpx;
+  font-weight: 600;
+  border: none;
+  padding: 0;
+  box-shadow: 0 8rpx 24rpx rgba(59, 130, 246, 0.3);
+  white-space: nowrap;
+}
+
+.confirm-btn::after { border: none; }
+
+.confirm-btn:active {
+  transform: scale(0.97);
+  box-shadow: 0 4rpx 16rpx rgba(59, 130, 246, 0.25);
+}
+
+.confirm-btn[disabled] {
+  background: #e5e7eb;
+  color: #9ca3af;
+  box-shadow: none;
+}
+/* ========== 按钮设计系统结束 ========== */
+
 .tips {
   display: block;
-  margin-top: 40rpx;
+  margin-top: 36rpx;
   font-size: 24rpx;
-  color: #aab2bd;
+  color: #9ca3af;
   text-align: center;
+}
+
+/* 步骤指示器 */
+.step-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 32rpx;
+  gap: 16rpx;
+}
+
+.step-dot {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  background: #e5e7eb;
+  transition: all 0.4s ease;
+}
+
+.step-dot.active {
+  background: #3b82f6;
+  box-shadow: 0 0 12rpx rgba(59, 130, 246, 0.4);
+  width: 20rpx;
+  height: 20rpx;
+}
+
+.step-line {
+  width: 48rpx;
+  height: 3rpx;
+  background: #e5e7eb;
+  border-radius: 2rpx;
 }
 
 /* 资料完善区域 */
@@ -100,105 +271,104 @@
 }
 
 .profile-title {
-  font-size: 36rpx;
+  font-size: 38rpx;
   font-weight: 700;
-  color: #1a1a1a;
-  margin-bottom: 12rpx;
+  color: #1a1a2e;
+  margin-bottom: 10rpx;
+  letter-spacing: 2rpx;
 }
 
 .profile-desc {
-  font-size: 26rpx;
-  color: #999;
+  font-size: 24rpx;
+  color: #8b8ba0;
   margin-bottom: 48rpx;
 }
 
 .input-group {
   width: 100%;
-  margin-bottom: 32rpx;
+  margin-bottom: 28rpx;
 }
 
-.input-label {
-  display: block;
-  font-size: 28rpx;
-  color: #555;
-  margin-bottom: 12rpx;
-  padding-left: 8rpx;
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  background: #f8f9fa;
+  border-radius: 20rpx;
+  border: 1rpx solid #e5e7eb;
+  overflow: hidden;
+  transition: border-color 0.3s ease;
+}
+
+.input-wrapper:focus-within {
+  border-color: rgba(59, 130, 246, 0.4);
+  box-shadow: 0 0 0 4rpx rgba(59, 130, 246, 0.06);
+  background: #ffffff;
+}
+
+.input-icon {
+  font-size: 32rpx;
+  padding: 0 16rpx 0 28rpx;
+  flex-shrink: 0;
 }
 
 .nickname-input {
-  width: 100%;
-  height: 88rpx;
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 0 24rpx;
-  font-size: 30rpx;
+  flex: 1;
+  height: 92rpx;
+  background: transparent;
+  padding: 0 20rpx 0 0;
+  font-size: 28rpx;
+  color: #1a1a2e;
   box-sizing: border-box;
-  border: 2rpx solid #e8e8e8;
 }
 
-.phone-btn {
-  width: 100%;
-  height: 88rpx;
-  line-height: 88rpx;
+.nickname-input::placeholder {
+  color: #9ca3af;
+}
+
+.input-hint {
+  display: block;
+  font-size: 20rpx;
+  color: #9ca3af;
+  margin-top: 14rpx;
   text-align: center;
-  border-radius: 16rpx;
-  background: #fff;
-  color: #555;
-  font-size: 30rpx;
-  border: 2rpx dashed #d0d0d0;
-  padding: 0;
+}
+
+/* 手机号只读展示 */
+.phone-display {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  padding: 20rpx 24rpx;
+  margin-bottom: 20rpx;
+  background: #f0fdf4;
+  border-radius: 20rpx;
+  border: 1rpx solid rgba(34, 197, 94, 0.15);
   box-sizing: border-box;
 }
 
-.phone-btn::after {
-  border: none;
+.phone-display-icon {
+  font-size: 28rpx;
 }
 
+.phone-display-text {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1a1a2e;
+  letter-spacing: 2rpx;
+}
+
+.phone-display-check {
+  font-size: 22rpx;
+  color: #16a34a;
+  font-weight: 500;
+}
+
+/* 底部按钮组 */
 .profile-actions {
   width: 100%;
   display: flex;
-  gap: 24rpx;
-  margin-top: 24rpx;
-}
-
-.skip-btn {
-  flex: 1;
-  height: 88rpx;
-  line-height: 88rpx;
-  text-align: center;
-  border-radius: 44rpx;
-  background: #f0f0f0;
-  color: #888;
-  font-size: 30rpx;
-  border: none;
-  padding: 0;
-}
-
-.skip-btn::after {
-  border: none;
-}
-
-.confirm-btn {
-  flex: 1;
-  height: 88rpx;
-  line-height: 88rpx;
-  text-align: center;
-  border-radius: 44rpx;
-  background: linear-gradient(145deg, #4A90D9 0%, #2563EB 100%);
-  color: white;
-  font-size: 30rpx;
-  font-weight: bold;
-  border: none;
-  padding: 0;
-  box-shadow: 0 8rpx 24rpx rgba(74, 144, 217, 0.3);
-}
-
-.confirm-btn::after {
-  border: none;
-}
-
-.confirm-btn[disabled] {
-  background: #e2e8f0;
-  color: #94a3b8;
-  box-shadow: none;
+  gap: 20rpx;
+  margin-top: 40rpx;
 }

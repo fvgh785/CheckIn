@@ -1,56 +1,77 @@
 <view class="login-container">
-  <view class="logo-section">
-    <view class="logo">
-      <text>📅</text>
-    </view>
-    <text class="app-name">每日打卡</text>
-    <text class="app-desc">记录每一天，成就更好的自己</text>
+  <!-- 背景装饰 -->
+  <view class="bg-decoration">
+    <view class="bg-circle bg-circle-1"></view>
+    <view class="bg-circle bg-circle-2"></view>
+    <view class="bg-circle bg-circle-3"></view>
   </view>
 
-  <!-- 未登录状态：显示登录按钮 -->
-  <view class="login-section" wx:if="{{!loggedIn}}">
-    <button class="login-btn" bindtap="handleLogin" loading="{{loading}}" disabled="{{loading}}">
-      微信一键登录
-    </button>
-    <text class="tips">登录后即可同步您的打卡数据</text>
-  </view>
-
-  <!-- 已登录状态：显示资料完善 -->
-  <view class="profile-section" wx:if="{{loggedIn}}">
-    <text class="profile-title">完善资料</text>
-    <text class="profile-desc">完善以下信息，方便管理员联系</text>
-
-    <!-- 昵称输入 -->
-    <view class="input-group">
-      <text class="input-label">昵称</text>
-      <input
-        class="nickname-input"
-        type="nickname"
-        placeholder="请输入昵称"
-        value="{{nickname}}"
-        bindinput="onNicknameInput"
-        maxlength="20"
-      />
+  <view class="login-card">
+    <view class="logo-section">
+      <view class="logo-ring">
+        <view class="logo">
+          <text>📅</text>
+        </view>
+      </view>
+      <text class="app-name">每日打卡</text>
+      <text class="app-desc">记录每一天，成就更好的自己</text>
     </view>
 
-    <!-- 手机号按钮 -->
-    <view class="input-group">
-      <text class="input-label">手机号</text>
+    <!-- 未登录状态：显示登录按钮 -->
+    <view class="login-section" wx:if="{{!loggedIn}}">
       <button
-        class="phone-btn"
+        class="login-btn"
         open-type="getPhoneNumber"
-        bindgetphonenumber="onGetPhoneNumber"
-        disabled="{{gettingPhone}}"
+        bindgetphonenumber="handleLoginWithPhone"
+        loading="{{loading}}"
+        disabled="{{loading}}"
       >
-        {{phone || '点击获取手机号'}}
+        <text class="login-btn-icon">🔐</text>
+        <text>微信一键登录</text>
       </button>
+      <text class="tips">点击按钮授权登录，手机号仅用于账号安全</text>
     </view>
 
-    <view class="profile-actions">
-      <button class="skip-btn" bindtap="handleSkipProfile">跳过</button>
-      <button class="confirm-btn" bindtap="handleConfirmProfile" loading="{{saving}}" disabled="{{saving}}">
-        完成
-      </button>
+    <!-- 已登录状态：昵称可选完善 -->
+    <view class="profile-section" wx:if="{{loggedIn}}">
+      <view class="step-indicator">
+        <view class="step-dot active"></view>
+        <view class="step-dot active"></view>
+      </view>
+      <text class="profile-title">完善资料</text>
+      <text class="profile-desc">设置昵称，让伙伴们认识你</text>
+
+      <!-- 已获取手机号显示 -->
+      <view wx:if="{{phone}}" class="phone-display">
+        <text class="phone-display-icon">📱</text>
+        <text class="phone-display-text">{{phone}}</text>
+        <text class="phone-display-check">✓ 已授权</text>
+      </view>
+
+      <!-- 昵称输入（可选） -->
+      <view class="input-group">
+        <view class="input-wrapper">
+          <text class="input-icon">👤</text>
+          <input
+            class="nickname-input"
+            type="nickname"
+            placeholder="请输入昵称（选填）"
+            value="{{nickname}}"
+            bindinput="onNicknameInput"
+            maxlength="20"
+          />
+        </view>
+      </view>
+
+      <view class="profile-actions">
+        <button class="skip-btn" bindtap="handleGoBack">
+          <text>返回</text>
+        </button>
+        <button class="confirm-btn" bindtap="handleConfirmProfile" loading="{{saving}}" disabled="{{saving}}">
+          <text wx:if="{{!saving}}">✨ 完成</text>
+          <text wx:else>保存中...</text>
+        </button>
+      </view>
     </view>
   </view>
 </view>

@@ -17,6 +17,7 @@ APP_SECRET = os.environ.get('WX_APP_SECRET', '')
 def handle_login():
     data = request.get_json(silent=True) or {}
     code = data.get('code', '')
+    phone_code = data.get('phone_code', '').strip()
 
     if not code:
         return jsonify({'error': '缺少登录凭证'}), 400
@@ -46,10 +47,37 @@ def handle_login():
         _logger.error(f'login failed for openid={result.get("openid")}: {traceback.format_exc()}')
         return jsonify({'error': '服务器内部错误'}), 500
 
+    # 如果提供了 phone_code，在登录同时完成手机号获取
+    phone = session.get('phone', '')
+    if phone_code and not phone:
+        try:
+            token_resp = requests.get(
+                'https://api.weixin.qq.com/cgi-bin/token'
+                f'?grant_type=client_credential&appid={APP_ID}&secret={APP_SECRET}',
+                timeout=10
+            )
+            token_data = token_resp.json()
+            access_token = token_data.get('access_token')
+            if access_token:
+                phone_resp = requests.post(
+                    f'https://api.weixin.qq.com/wxa/business/getuserphonenumber?access_token={access_token}',
+                    json={'code': phone_code},
+                    timeout=10
+                )
+                phone_data = phone_resp.json()
+                if phone_data.get('errcode') == 0:
+                    phone_info = phone_data.get('phone_info', {})
+                    phone_number = phone_info.get('purePhoneNumber', '')
+                    if phone_number:
+                        update_user_profile(result['openid'], phone=phone_number)
+                        phone = phone_number
+        except Exception:
+            _logger.warning(f'Phone exchange during login failed: {traceback.format_exc()}')
+
     return jsonify({
         'token': session['token'],
         'user_id': session['user_id'],
-        'phone': session.get('phone', ''),
+        'phone': phone,
         'nickname': session.get('nickname', ''),
     })
 
