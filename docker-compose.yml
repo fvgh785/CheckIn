@@ -47,7 +47,7 @@ services:
       - SMTP_PORT=465
       - SMTP_USER=your_email@163.com
       - SMTP_PASSWORD=your_smtp_auth_code
-      - SMTP_FROM_NAME=每日打卡
+      - SMTP_FROM_NAME=CCCheckInba
       # AI_API_KEY is optional for AI insights feature
       # - AI_API_KEY=sk-your-deepseek-key
 
