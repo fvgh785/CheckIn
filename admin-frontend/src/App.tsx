@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { App as AntApp } from 'antd';
+import ErrorBoundary from './components/ErrorBoundary';
 import AuthGuard from './components/AuthGuard';
 import MainLayout from './layouts/MainLayout';
 import Login from './pages/Login';
@@ -20,6 +21,7 @@ import SystemConfig from './pages/config/SystemConfig';
 
 export default function App() {
   return (
+    <ErrorBoundary>
     <AntApp>
       <Routes>
         <Route path="/login" element={<Login />} />
@@ -49,5 +51,6 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AntApp>
+    </ErrorBoundary>
   );
 }

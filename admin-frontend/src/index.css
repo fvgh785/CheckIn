@@ -9,8 +9,12 @@ html {
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  /* 确保 body 始终可交互，防止 Unknown 遮罩层锁死页面 */
+  overflow: auto !important;
+  pointer-events: auto !important;
 }
 
 #root {
   min-height: 100vh;
+  pointer-events: auto !important;
 }
