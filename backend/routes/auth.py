@@ -110,19 +110,30 @@ def handle_exchange_phone():
 @auth_bp.route('/update-profile', methods=['POST'])
 @auth_required
 def handle_update_profile():
-    """更新用户昵称"""
+    """更新用户昵称和/或手机号"""
     data = request.get_json(silent=True) or {}
     nickname = data.get('nickname', '').strip()
+    phone = data.get('phone', '').strip()
 
-    if not nickname:
-        return jsonify({'error': '缺少昵称'}), 400
-    if len(nickname) > 50:
+    if not nickname and not phone:
+        return jsonify({'error': '缺少更新内容'}), 400
+    if nickname and len(nickname) > 50:
         return jsonify({'error': '昵称最长50个字符'}), 400
 
+    # 校验手机号格式
+    import re
+    if phone and not re.match(r'^1[3-9]\d{9}$', phone):
+        return jsonify({'error': '手机号格式不正确'}), 400
+
     try:
-        result = update_user_profile(g.user['openId'], nickname=nickname)
+        result = update_user_profile(g.user['openId'], nickname=nickname or None, phone=phone or None)
         if result['success']:
-            return jsonify({'success': True, 'nickname': nickname})
+            resp = {'success': True}
+            if nickname:
+                resp['nickname'] = nickname
+            if phone:
+                resp['phone'] = phone
+            return jsonify(resp)
         return jsonify(result), 400
     except Exception:
         _logger.error(f'Update profile failed: {traceback.format_exc()}')
