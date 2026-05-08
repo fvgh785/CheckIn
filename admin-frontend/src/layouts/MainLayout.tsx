@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Layout, Menu, Button, Dropdown, theme, Modal, Input, App as AntApp } from 'antd';
 import {
@@ -50,6 +50,7 @@ const menuItems: MenuProps['items'] = [
 
 export default function MainLayout() {
   const [collapsed, setCollapsed] = useState(false);
+  const [openKeys, setOpenKeys] = useState<string[]>([]);
   const navigate = useNavigate();
   const location = useLocation();
   const { token: themeToken } = theme.useToken();
@@ -133,6 +134,15 @@ export default function MainLayout() {
     return [];
   };
 
+  // 路由变化时同步 openKeys
+  useEffect(() => {
+    setOpenKeys(getOpenKeys());
+  }, [location.pathname]);
+
+  const handleOpenChange = (keys: string[]) => {
+    setOpenKeys(keys);
+  };
+
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <Sider
@@ -164,7 +174,8 @@ export default function MainLayout() {
         <Menu
           mode="inline"
           selectedKeys={[getSelectedKey()]}
-          defaultOpenKeys={getOpenKeys()}
+          openKeys={openKeys}
+          onOpenChange={handleOpenChange}
           items={menuItems}
           onClick={handleMenuClick}
           style={{ borderRight: 0 }}

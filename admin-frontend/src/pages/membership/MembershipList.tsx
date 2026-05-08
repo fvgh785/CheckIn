@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Table, Typography, Tag, Button, Modal, InputNumber, Space, message } from 'antd';
+import { Table, Typography, Tag, Button, Modal, InputNumber, Space, message, Input, Radio } from 'antd';
 import { CrownOutlined, StopOutlined } from '@ant-design/icons';
-import { getMembershipList, activateMembership, cancelMembership } from '../../services/admin';
+import { getMembershipList, activateMembership, activateMembershipByPhone, cancelMembership } from '../../services/admin';
 import dayjs from 'dayjs';
 
 const { Title } = Typography;
@@ -10,6 +10,8 @@ interface Membership {
   id: string;
   user_id: string;
   open_id: string;
+  phone: string;
+  nickname: string;
   level: string;
   start_date: string;
   end_date: string;
@@ -25,7 +27,9 @@ export default function MembershipList() {
   const [page, setPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
   const [activatingUserId, setActivatingUserId] = useState('');
+  const [phoneInput, setPhoneInput] = useState('');
   const [months, setMonths] = useState(1);
+  const [activateMode, setActivateMode] = useState<'id' | 'phone'>('id');
 
   useEffect(() => { loadData(); }, [page]);
 
@@ -38,14 +42,43 @@ export default function MembershipList() {
     } catch { /* handled */ } finally { setLoading(false); }
   };
 
+  const openActivateModal = (userId: string) => {
+    setActivateMode('id');
+    setActivatingUserId(userId);
+    setPhoneInput('');
+    setMonths(1);
+    setModalOpen(true);
+  };
+
+  const openActivateByPhoneModal = () => {
+    setActivateMode('phone');
+    setActivatingUserId('');
+    setPhoneInput('');
+    setMonths(1);
+    setModalOpen(true);
+  };
+
   const handleActivate = async () => {
-    if (!activatingUserId) return;
-    try {
-      await activateMembership(activatingUserId, months);
-      message.success('会员开通/续费成功');
-      setModalOpen(false);
-      loadData();
-    } catch { /* handled */ }
+    if (activateMode === 'phone') {
+      if (!phoneInput) {
+        message.warning('请输入手机号');
+        return;
+      }
+      try {
+        await activateMembershipByPhone(phoneInput, months);
+        message.success('会员开通/续费成功');
+        setModalOpen(false);
+        loadData();
+      } catch { /* handled */ }
+    } else {
+      if (!activatingUserId) return;
+      try {
+        await activateMembership(activatingUserId, months);
+        message.success('会员开通/续费成功');
+        setModalOpen(false);
+        loadData();
+      } catch { /* handled */ }
+    }
   };
 
   const handleCancel = async (userId: string) => {
@@ -63,6 +96,8 @@ export default function MembershipList() {
   const columns = [
     { title: 'User ID', dataIndex: 'user_id', key: 'user_id', width: 120, ellipsis: true },
     { title: 'Open ID', dataIndex: 'open_id', key: 'open_id', ellipsis: true },
+    { title: '手机号', dataIndex: 'phone', key: 'phone', width: 120, render: (v: string) => v || '-' },
+    { title: '昵称', dataIndex: 'nickname', key: 'nickname', width: 100, render: (v: string) => v || '-' },
     { title: '等级', dataIndex: 'level', key: 'level', width: 80 },
     { title: '开始日期', dataIndex: 'start_date', key: 'start_date', width: 110 },
     { title: '到期日期', dataIndex: 'end_date', key: 'end_date', width: 110 },
@@ -76,7 +111,7 @@ export default function MembershipList() {
       title: '操作', key: 'action', width: 100,
       render: (_: unknown, r: Membership) => (
         <Space>
-          <a onClick={() => { setActivatingUserId(r.user_id); setMonths(1); setModalOpen(true); }}>
+          <a onClick={() => openActivateModal(r.user_id)}>
             <CrownOutlined /> 续费
           </a>
           {r.is_active && (
@@ -92,16 +127,31 @@ export default function MembershipList() {
   return (
     <div>
       <Title level={4}>会员管理</Title>
+      <Button type="primary" icon={<CrownOutlined />} onClick={openActivateByPhoneModal} style={{ marginBottom: 16 }}>
+        按手机号开通会员
+      </Button>
       <Table dataSource={data} columns={columns} rowKey="id" loading={loading}
         pagination={{ current: page, total, pageSize: 20, onChange: (p) => setPage(p), showTotal: (t) => `共 ${t} 条` }} />
 
-      <Modal title="开通/续费会员" open={modalOpen} onOk={handleActivate}
+      <Modal title={activateMode === 'phone' ? '按手机号开通会员' : '开通/续费会员'} open={modalOpen} onOk={handleActivate}
         onCancel={() => setModalOpen(false)} okText="确认" cancelText="取消">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 16 }}>
-          <div>
-            <span>用户ID: </span>
-            <span style={{ fontWeight: 'bold' }}>{activatingUserId}</span>
-          </div>
+          <Radio.Group value={activateMode} onChange={(e) => setActivateMode(e.target.value)}>
+            <Radio.Button value="id">按用户ID</Radio.Button>
+            <Radio.Button value="phone">按手机号</Radio.Button>
+          </Radio.Group>
+          {activateMode === 'id' ? (
+            <div>
+              <span>用户ID: </span>
+              <span style={{ fontWeight: 'bold' }}>{activatingUserId}</span>
+            </div>
+          ) : (
+            <Input
+              placeholder="请输入手机号"
+              value={phoneInput}
+              onChange={(e) => setPhoneInput(e.target.value)}
+            />
+          )}
           <div>
             <span>续费月数: </span>
             <InputNumber min={1} max={36} value={months} onChange={(v) => setMonths(v || 1)} />

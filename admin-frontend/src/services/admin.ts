@@ -27,6 +27,12 @@ export const getMembershipList = (params: { page?: number; page_size?: number })
 export const activateMembership = (userId: string, months: number) =>
   api.post('/membership/activate', { user_id: userId, months });
 
+export const activateMembershipByPhone = (phone: string, months: number) =>
+  api.post('/membership/activate', { phone, months });
+
+export const lookupUserByPhone = (phone: string) =>
+  api.get('/users/lookup', { params: { phone } });
+
 export const getMembershipStatus = (userId: string) =>
   api.get(`/membership/status/${userId}`);
 

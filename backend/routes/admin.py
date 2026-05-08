@@ -6,7 +6,7 @@ from datetime import date, datetime
 from flask import Blueprint, request, jsonify, g
 
 from middleware.admin_auth import admin_required, super_admin_required, _create_admin_token
-from db import get_connection, init_db, check_in_by_user_id, get_stats_by_user_id
+from db import get_connection, init_db, check_in_by_user_id, get_stats_by_user_id, get_user_by_phone
 from db_membership import (
     activate_membership, get_membership, get_pet, ensure_pet_exists,
     get_wishes, get_capsules, get_insight_history
@@ -141,24 +141,24 @@ def handle_user_list():
             with conn.cursor() as cur:
                 if keyword:
                     cur.execute(
-                        'SELECT COUNT(*) as total FROM users WHERE open_id LIKE %s',
-                        (f'%{keyword}%',)
+                        'SELECT COUNT(*) as total FROM users WHERE open_id LIKE %s OR phone LIKE %s OR nickname LIKE %s',
+                        (f'%{keyword}%', f'%{keyword}%', f'%{keyword}%')
                     )
                     total = cur.fetchone()['total']
                     cur.execute(
-                        '''SELECT u.id, u.open_id, u.created_at,
+                        '''SELECT u.id, u.open_id, u.phone, u.nickname, u.created_at,
                                   (SELECT COUNT(*) FROM check_ins WHERE user_id = u.id) as total_checkins,
                                   (SELECT COUNT(*) FROM memberships WHERE user_id = u.id AND status = 1 AND end_date >= %s) as is_member
                            FROM users u
-                           WHERE u.open_id LIKE %s
+                           WHERE u.open_id LIKE %s OR u.phone LIKE %s OR u.nickname LIKE %s
                            ORDER BY u.created_at DESC LIMIT %s OFFSET %s''',
-                        (date.today(), f'%{keyword}%', page_size, offset)
+                        (date.today(), f'%{keyword}%', f'%{keyword}%', f'%{keyword}%', page_size, offset)
                     )
                 else:
                     cur.execute('SELECT COUNT(*) as total FROM users')
                     total = cur.fetchone()['total']
                     cur.execute(
-                        '''SELECT u.id, u.open_id, u.created_at,
+                        '''SELECT u.id, u.open_id, u.phone, u.nickname, u.created_at,
                                   (SELECT COUNT(*) FROM check_ins WHERE user_id = u.id) as total_checkins,
                                   (SELECT COUNT(*) FROM memberships WHERE user_id = u.id AND status = 1 AND end_date >= %s) as is_member
                            FROM users u
@@ -169,6 +169,8 @@ def handle_user_list():
                 users = [{
                     'user_id': r['id'],
                     'open_id': r['open_id'][:20] + '...' if len(r['open_id']) > 20 else r['open_id'],
+                    'phone': r.get('phone', ''),
+                    'nickname': r.get('nickname', ''),
                     'created_at': str(r['created_at']),
                     'total_checkins': r['total_checkins'],
                     'is_member': bool(r['is_member']),
@@ -210,6 +212,8 @@ def handle_user_detail(user_id):
                 return jsonify({
                     'user_id': user['id'],
                     'open_id': user['open_id'],
+                    'phone': user.get('phone', ''),
+                    'nickname': user.get('nickname', ''),
                     'created_at': str(user['created_at']),
                     'stats': stats,
                     'membership': membership,
@@ -240,7 +244,7 @@ def handle_membership_list():
                 cur.execute('SELECT COUNT(*) as total FROM memberships')
                 total = cur.fetchone()['total']
                 cur.execute(
-                    '''SELECT m.*, u.open_id
+                    '''SELECT m.*, u.open_id, u.phone, u.nickname
                        FROM memberships m
                        JOIN users u ON m.user_id = u.id
                        ORDER BY m.created_at DESC LIMIT %s OFFSET %s''',
@@ -251,6 +255,8 @@ def handle_membership_list():
                     'id': r['id'],
                     'user_id': r['user_id'],
                     'open_id': r['open_id'][:20] + '...' if len(r['open_id']) > 20 else r['open_id'],
+                    'phone': r.get('phone', ''),
+                    'nickname': r.get('nickname', ''),
                     'level': r['level'],
                     'start_date': str(r['start_date']),
                     'end_date': str(r['end_date']),
@@ -269,15 +275,23 @@ def handle_membership_list():
 @admin_bp.route('/membership/activate', methods=['POST'])
 @admin_required
 def handle_activate_membership():
-    """管理后台：开通/续费会员"""
+    """管理后台：开通/续费会员（支持 user_id 或 phone 参数）"""
     data = request.get_json(silent=True) or {}
     user_id = data.get('user_id', '').strip()
+    phone = data.get('phone', '').strip()
     months = data.get('months', 1)
 
-    if not user_id:
-        return jsonify({'error': '缺少用户ID'}), 400
+    if not user_id and not phone:
+        return jsonify({'error': '缺少用户ID或手机号'}), 400
     if not isinstance(months, int) or months < 1 or months > 36:
         return jsonify({'error': '月数需在1-36之间'}), 400
+
+    # 如果提供了手机号，先查找用户
+    if phone and not user_id:
+        user = get_user_by_phone(phone)
+        if not user:
+            return jsonify({'error': '未找到该手机号对应的用户'}), 404
+        user_id = user['id']
 
     try:
         result = activate_membership(user_id, months)
@@ -299,6 +313,24 @@ def handle_admin_membership_status(user_id):
         return jsonify(result)
     except Exception:
         _logger.error(f'admin membership status failed: {traceback.format_exc()}')
+        return jsonify({'error': '服务器内部错误'}), 500
+
+
+@admin_bp.route('/users/lookup', methods=['GET'])
+@admin_required
+def handle_lookup_user_by_phone():
+    """按手机号查找用户"""
+    phone = request.args.get('phone', '').strip()
+    if not phone:
+        return jsonify({'error': '缺少手机号'}), 400
+
+    try:
+        user = get_user_by_phone(phone)
+        if not user:
+            return jsonify({'error': '未找到该手机号对应的用户'}), 404
+        return jsonify({'user': user})
+    except Exception:
+        _logger.error(f'lookup user by phone failed: {traceback.format_exc()}')
         return jsonify({'error': '服务器内部错误'}), 500
 
 

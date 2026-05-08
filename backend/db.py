@@ -127,6 +127,15 @@ def init_db():
                 cur.execute('ALTER TABLE squads ADD COLUMN last_streak_date DATE')
             except Exception:
                 pass  # 字段已存在
+            # 兼容旧表：添加 phone / nickname 字段
+            try:
+                cur.execute('ALTER TABLE users ADD COLUMN phone VARCHAR(20) DEFAULT \'\'')
+            except Exception:
+                pass
+            try:
+                cur.execute('ALTER TABLE users ADD COLUMN nickname VARCHAR(50) DEFAULT \'\'')
+            except Exception:
+                pass
             cur.execute('''
                 CREATE TABLE IF NOT EXISTS squad_members (
                     id VARCHAR(36) PRIMARY KEY,
@@ -266,11 +275,64 @@ def get_or_create_user(open_id):
                     (user_id, open_id)
                 )
                 conn.commit()
-                return {'id': user_id, 'open_id': open_id}
+                return {'id': user_id, 'open_id': open_id, 'phone': '', 'nickname': ''}
             except pymysql.err.IntegrityError:
                 # Race condition: another request created this user concurrently
                 cur.execute('SELECT * FROM users WHERE open_id = %s', (open_id,))
                 return cur.fetchone()
+    finally:
+        conn.close()
+
+
+def update_user_profile(open_id, phone=None, nickname=None):
+    """更新用户手机号和昵称"""
+    init_db()
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT * FROM users WHERE open_id = %s', (open_id,))
+            user = cur.fetchone()
+            if not user:
+                return {'success': False, 'message': '用户不存在'}
+
+            updates = []
+            params = []
+            if phone is not None and phone:
+                updates.append('phone = %s')
+                params.append(phone)
+            if nickname is not None and nickname:
+                updates.append('nickname = %s')
+                params.append(nickname)
+
+            if not updates:
+                return {'success': False, 'message': '无更新内容'}
+
+            params.append(open_id)
+            sql = f'UPDATE users SET {', '.join(updates)} WHERE open_id = %s'
+            cur.execute(sql, params)
+            conn.commit()
+            return {'success': True, 'message': '资料更新成功'}
+    finally:
+        conn.close()
+
+
+def get_user_by_phone(phone):
+    """按手机号查找用户"""
+    init_db()
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT * FROM users WHERE phone = %s', (phone,))
+            row = cur.fetchone()
+            if row:
+                return {
+                    'id': row['id'],
+                    'open_id': row['open_id'],
+                    'phone': row.get('phone', ''),
+                    'nickname': row.get('nickname', ''),
+                    'created_at': str(row['created_at']),
+                }
+            return None
     finally:
         conn.close()
 
@@ -292,7 +354,12 @@ def login(open_id):
             conn.commit()
     finally:
         conn.close()
-    return {'token': token, 'user_id': user['id']}
+    return {
+        'token': token,
+        'user_id': user['id'],
+        'phone': user.get('phone', ''),
+        'nickname': user.get('nickname', ''),
+    }
 
 
 def verify_token(token):

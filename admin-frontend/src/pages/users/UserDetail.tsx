@@ -10,6 +10,8 @@ const { Title } = Typography;
 interface UserDetailData {
   user_id: string;
   open_id: string;
+  phone: string;
+  nickname: string;
   created_at: string;
   stats: {
     has_checked_today: boolean;
@@ -66,6 +68,8 @@ export default function UserDetail() {
         <Descriptions column={2}>
           <Descriptions.Item label="User ID">{user.user_id}</Descriptions.Item>
           <Descriptions.Item label="Open ID">{user.open_id}</Descriptions.Item>
+          <Descriptions.Item label="手机号">{user.phone || '-'}</Descriptions.Item>
+          <Descriptions.Item label="昵称">{user.nickname || '-'}</Descriptions.Item>
           <Descriptions.Item label="注册时间">{dayjs(user.created_at).format('YYYY-MM-DD HH:mm:ss')}</Descriptions.Item>
           <Descriptions.Item label="今日打卡">
             {user.stats.has_checked_today ? <Tag color="green">已打卡</Tag> : <Tag color="red">未打卡</Tag>}

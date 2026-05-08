@@ -90,3 +90,115 @@
   color: #aab2bd;
   text-align: center;
 }
+
+/* 资料完善区域 */
+.profile-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.profile-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 12rpx;
+}
+
+.profile-desc {
+  font-size: 26rpx;
+  color: #999;
+  margin-bottom: 48rpx;
+}
+
+.input-group {
+  width: 100%;
+  margin-bottom: 32rpx;
+}
+
+.input-label {
+  display: block;
+  font-size: 28rpx;
+  color: #555;
+  margin-bottom: 12rpx;
+  padding-left: 8rpx;
+}
+
+.nickname-input {
+  width: 100%;
+  height: 88rpx;
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 0 24rpx;
+  font-size: 30rpx;
+  box-sizing: border-box;
+  border: 2rpx solid #e8e8e8;
+}
+
+.phone-btn {
+  width: 100%;
+  height: 88rpx;
+  line-height: 88rpx;
+  text-align: center;
+  border-radius: 16rpx;
+  background: #fff;
+  color: #555;
+  font-size: 30rpx;
+  border: 2rpx dashed #d0d0d0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.phone-btn::after {
+  border: none;
+}
+
+.profile-actions {
+  width: 100%;
+  display: flex;
+  gap: 24rpx;
+  margin-top: 24rpx;
+}
+
+.skip-btn {
+  flex: 1;
+  height: 88rpx;
+  line-height: 88rpx;
+  text-align: center;
+  border-radius: 44rpx;
+  background: #f0f0f0;
+  color: #888;
+  font-size: 30rpx;
+  border: none;
+  padding: 0;
+}
+
+.skip-btn::after {
+  border: none;
+}
+
+.confirm-btn {
+  flex: 1;
+  height: 88rpx;
+  line-height: 88rpx;
+  text-align: center;
+  border-radius: 44rpx;
+  background: linear-gradient(145deg, #4A90D9 0%, #2563EB 100%);
+  color: white;
+  font-size: 30rpx;
+  font-weight: bold;
+  border: none;
+  padding: 0;
+  box-shadow: 0 8rpx 24rpx rgba(74, 144, 217, 0.3);
+}
+
+.confirm-btn::after {
+  border: none;
+}
+
+.confirm-btn[disabled] {
+  background: #e2e8f0;
+  color: #94a3b8;
+  box-shadow: none;
+}
