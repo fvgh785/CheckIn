@@ -381,10 +381,11 @@ def get_my_squad(user_id):
             if not squad:
                 return None
 
-            # 获取成员信息
+            # 获取成员信息（含昵称）
             cur.execute('''
-                SELECT sm.user_id, sm.joined_at
+                SELECT sm.user_id, sm.joined_at, u.nickname
                 FROM squad_members sm
+                JOIN users u ON sm.user_id = u.id
                 WHERE sm.squad_id = %s
                 ORDER BY sm.joined_at ASC
             ''', (squad['id'],))
@@ -404,6 +405,7 @@ def get_my_squad(user_id):
                     all_checked_today = False
                 member_list.append({
                     'user_id': m['user_id'],
+                    'nickname': m.get('nickname', '') or ('队友' + m['user_id'][:4]),
                     'checked_today': checked,
                     'is_owner': m['user_id'] == squad['owner_id'],
                 })
