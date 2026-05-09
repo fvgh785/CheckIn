@@ -1,19 +1,32 @@
 <view class="container">
   <view class="page-header">
     <text class="page-title">AI 智能周报</text>
-    <text class="page-desc">每周AI分析你的打卡习惯</text>
+    <text class="page-desc">AI分析你的打卡习惯，给出专属建议</text>
   </view>
 
   <!-- 本周洞察 -->
   <view wx:if="{{insight}}" class="insight-card current">
     <view class="card-badge">📊 本周洞察</view>
     <text class="insight-content">{{insight.content}}</text>
+    <view class="regenerate-row">
+      <text class="quota-tip">今日剩余 {{quota.remaining}}/{{quota.limit}} 次</text>
+      <button wx:if="{{quota.remaining > 0}}" class="regenerate-btn" bindtap="handleGenerate" loading="{{generating}}">🔄 重新生成</button>
+      <text wx:else class="quota-exhausted">今日次数已用完</text>
+    </view>
   </view>
 
-  <view wx:if="{{!insight && !loading}}" class="empty-card">
+  <view wx:if="{{!insight && !loading && !generating}}" class="empty-card">
     <text class="empty-emoji">🤖</text>
-    <text class="empty-text">本周洞察将在周日自动生成</text>
-    <text class="empty-sub">坚持打卡，AI教练会给你专属建议</text>
+    <text class="empty-text">本周洞察尚未生成</text>
+    <text class="empty-sub">点击下方按钮，AI教练为你分析本周打卡</text>
+    <button wx:if="{{quota.remaining > 0}}" class="generate-btn" bindtap="handleGenerate">✨ 生成本周洞察</button>
+    <text wx:else class="quota-exhausted center">今日生成次数已用完，明天再来吧</text>
+    <text class="quota-tip center" wx:if="{{quota.remaining > 0}}">今日剩余 {{quota.remaining}}/{{quota.limit}} 次</text>
+  </view>
+
+  <view wx:if="{{generating}}" class="generating-card">
+    <text class="generating-emoji">⏳</text>
+    <text class="generating-text">AI正在分析你的打卡数据...</text>
   </view>
 
   <!-- 历史洞察 -->

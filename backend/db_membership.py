@@ -640,7 +640,7 @@ def get_week_start():
     return today - timedelta(days=today.weekday())
 
 
-def save_insight(user_id, content):
+def save_insight(user_id, content, force=False):
     """保存AI洞察"""
     init_db()
     conn = get_connection()
@@ -648,6 +648,12 @@ def save_insight(user_id, content):
         week_start = get_week_start()
         insight_id = str(uuid.uuid4())
         with conn.cursor() as cur:
+            # 强制重新生成时，先删除已存在的本周洞察
+            if force:
+                cur.execute(
+                    'DELETE FROM ai_insights WHERE user_id = %s AND week_start = %s',
+                    (user_id, week_start)
+                )
             cur.execute(
                 'INSERT INTO ai_insights (id, user_id, week_start, content) VALUES (%s, %s, %s, %s)',
                 (insight_id, user_id, week_start, content)
@@ -702,6 +708,75 @@ def get_insight_history(user_id, limit=10):
                 'content': r['content'],
                 'created_at': str(r['created_at']),
             } for r in rows]
+    finally:
+        conn.close()
+
+
+# ======================== 洞察手动生成配额 ========================
+
+DEFAULT_INSIGHT_GENERATION_LIMIT = 3
+
+
+def get_insight_generation_limit():
+    """从数据库动态读取AI洞察每日手动生成上限"""
+    try:
+        from db_admin import get_config_value
+        val = get_config_value('insight_generation_limit')
+        return int(val) if val else DEFAULT_INSIGHT_GENERATION_LIMIT
+    except Exception:
+        return DEFAULT_INSIGHT_GENERATION_LIMIT
+
+
+def check_insight_quota(user_id):
+    """查询今日剩余手动生成洞察次数"""
+    limit = get_insight_generation_limit()
+    init_db()
+    conn = get_connection()
+    try:
+        today = date.today()
+        with conn.cursor() as cur:
+            cur.execute(
+                'SELECT count FROM insight_generation_quota WHERE user_id = %s AND gen_date = %s',
+                (user_id, today)
+            )
+            row = cur.fetchone()
+            used = row['count'] if row else 0
+            remaining = max(0, limit - used)
+            return {'used': used, 'remaining': remaining, 'limit': limit}
+    finally:
+        conn.close()
+
+
+def use_insight_quota(user_id):
+    """消耗一次手动生成配额，返回是否成功及剩余次数"""
+    limit = get_insight_generation_limit()
+    init_db()
+    conn = get_connection()
+    try:
+        today = date.today()
+        with conn.cursor() as cur:
+            cur.execute(
+                'SELECT count FROM insight_generation_quota WHERE user_id = %s AND gen_date = %s FOR UPDATE',
+                (user_id, today)
+            )
+            row = cur.fetchone()
+            used = row['count'] if row else 0
+            if used >= limit:
+                return {'success': False, 'remaining': 0, 'message': f'今日已达上限（{limit}次/天）'}
+
+            if row:
+                cur.execute(
+                    'UPDATE insight_generation_quota SET count = count + 1 WHERE user_id = %s AND gen_date = %s',
+                    (user_id, today)
+                )
+            else:
+                cur.execute(
+                    'INSERT INTO insight_generation_quota (user_id, gen_date, count) VALUES (%s, %s, 1)',
+                    (user_id, today)
+                )
+            conn.commit()
+            remaining = limit - used - 1
+            return {'success': True, 'remaining': remaining, 'message': f'已消耗1次，剩余{remaining}次'}
     finally:
         conn.close()
 

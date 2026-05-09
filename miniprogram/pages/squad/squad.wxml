@@ -35,7 +35,7 @@
         <view class="member-avatar {{item.checked_today ? 'checked' : ''}}">
           <text>{{item.checked_today ? '✅' : '⭕'}}</text>
         </view>
-        <text class="member-id">{{item.user_id.substring(0, 8)}}...{{item.is_owner ? ' 👑' : ''}}</text>
+        <text class="member-name">{{item.nickname || '队友'}}{{item.is_owner ? ' 👑' : ''}}</text>
         <text class="member-status">{{item.checked_today ? '已打卡' : '未打卡'}}</text>
       </view>
     </view>

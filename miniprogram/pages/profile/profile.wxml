@@ -1,155 +1,139 @@
 <view class="container">
-  <!-- 会员状态卡片 -->
+  <!-- ========== 用户信息卡片 ========== -->
+  <view class="info-card">
+    <view class="info-avatar">
+      <text class="info-avatar-emoji">{{isMember ? '🌟' : '🌱'}}</text>
+    </view>
+    <view class="info-detail">
+      <!-- 昵称行 -->
+      <view class="info-row">
+        <text class="info-label">昵称</text>
+        <view wx:if="{{!showNicknameEdit}}" class="info-value-row">
+          <text class="info-value">{{nickname || '未设置'}}</text>
+          <text class="info-edit-tag" bindtap="toggleNicknameEdit">编辑</text>
+        </view>
+        <view wx:else class="info-edit-inline">
+          <input class="info-edit-input" placeholder="请输入昵称" maxlength="20" value="{{nicknameInput}}" bindinput="onNicknameInput" />
+          <text class="info-edit-confirm" bindtap="handleSaveNickname">保存</text>
+          <text class="info-edit-cancel" bindtap="toggleNicknameEdit">取消</text>
+        </view>
+      </view>
+      <!-- 邮箱行 -->
+      <view class="info-row">
+        <text class="info-label">邮箱</text>
+        <!-- 已绑定 + 非换绑模式 -->
+        <view wx:if="{{emailBound && !showRebind}}" class="info-value-row">
+          <text class="info-value email-value">{{email}}</text>
+          <text class="info-edit-tag" bindtap="toggleRebind">换绑</text>
+        </view>
+        <!-- 未绑定 -->
+        <view wx:elif="{{!emailBound && !showRebind}}" class="info-value-row">
+          <text class="info-value placeholder">未绑定</text>
+          <text class="info-edit-tag highlight" bindtap="toggleRebind">绑定</text>
+        </view>
+        <!-- 换绑/绑定模式 -->
+        <view wx:else class="info-email-form">
+          <input class="info-edit-input" type="text" placeholder="请输入邮箱地址" value="{{rebindEmail}}" bindinput="onRebindEmailInput" maxlength="50" disabled="{{emailSent}}" />
+          <view wx:if="{{!emailSent}}" class="info-email-actions">
+            <text class="info-edit-cancel" bindtap="toggleRebind">取消</text>
+            <text class="info-edit-confirm" bindtap="handleSendEmailCode">发送验证码</text>
+          </view>
+          <view wx:if="{{emailSent}}" class="info-email-verify">
+            <input class="info-edit-input code-input" type="number" placeholder="6位验证码" value="{{emailCode}}" bindinput="onEmailCodeInput" maxlength="6" />
+            <view class="info-verify-actions">
+              <text wx:if="{{countdown > 0}}" class="info-countdown">{{countdown}}s</text>
+              <text wx:else class="info-edit-tag" bindtap="handleSendEmailCode">重发</text>
+              <text class="info-edit-confirm" bindtap="handleBindEmail">确认绑定</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ========== 会员状态卡片 ========== -->
   <view class="member-card {{isMember ? 'active' : ''}}">
-    <view wx:if="{{isMember}}" class="member-badge">
-      <text class="badge-icon">✨</text>
-      <text class="badge-text">会员</text>
-    </view>
-    <view wx:else class="member-badge inactive">
-      <text class="badge-icon">👤</text>
-      <text class="badge-text">免费用户</text>
-    </view>
-
-    <view wx:if="{{isMember && membership}}" class="member-detail">
-      <view class="detail-item">
-        <text class="detail-label">等级</text>
-        <text class="detail-value">{{membership.level === 'premium' ? '高级会员' : membership.level}}</text>
+    <view wx:if="{{isMember && membership}}" class="member-active-area">
+      <view class="member-level-badge">
+        <text class="member-level-star">✨</text>
+        <text class="member-level-text">高级会员</text>
       </view>
-      <view class="detail-item">
-        <text class="detail-label">到期</text>
-        <text class="detail-value">{{membership.end_date}}</text>
-      </view>
+      <text class="member-expire">有效期至 {{membership.end_date}}</text>
     </view>
-
-    <view wx:if="{{!isMember}}" class="member-upgrade">
-      <text class="upgrade-title">🚀 开通会员解锁全部功能</text>
-      <view class="feature-tags">
-        <text class="feature-tag">🐾 宠物养成</text>
-        <text class="feature-tag">👥 打卡小队</text>
-        <text class="feature-tag">📊 AI周报</text>
-        <text class="feature-tag">⭐ 心愿清单</text>
-        <text class="feature-tag">⏳ 时光胶囊</text>
+    <view wx:else class="member-inactive-area">
+      <text class="member-inactive-title">开通会员，解锁更多精彩</text>
+      <view class="member-feature-row">
+        <text class="member-feature">🐾 宠物养成</text>
+        <text class="member-feature">👥 打卡小队</text>
+        <text class="member-feature">📊 AI周报</text>
+        <text class="member-feature">⭐ 心愿清单</text>
+        <text class="member-feature">⏳ 时光胶囊</text>
       </view>
     </view>
   </view>
 
-  <!-- 邮箱绑定 -->
-  <view class="section">
-    <text class="section-title">📧 邮箱绑定</text>
-
-    <!-- 已绑定 -->
-    <view wx:if="{{emailBound}}" class="email-card bound">
-      <view class="email-bound-info">
-        <text class="email-bound-icon">📧</text>
-        <view class="email-bound-detail">
-          <text class="email-bound-text">{{email}}</text>
-          <text class="email-bound-tag">✓ 已验证</text>
-        </view>
-      </view>
-    </view>
-
-    <!-- 未绑定：输入+验证 -->
-    <view wx:else class="email-card">
-      <view class="email-form">
-        <view class="email-input-row">
-          <text class="email-input-icon">📧</text>
-          <input
-            class="email-input"
-            type="text"
-            placeholder="请输入邮箱地址"
-            value="{{email}}"
-            bindinput="onEmailInput"
-            maxlength="50"
-            disabled="{{emailSent}}"
-          />
-        </view>
-
-        <!-- 发送验证码 -->
-        <view wx:if="{{email && !emailSent}}" class="email-send-row">
-          <button class="email-send-btn" bindtap="handleSendEmailCode" loading="{{sendingCode}}" disabled="{{sendingCode}}">
-            发送验证码
-          </button>
-        </view>
-
-        <!-- 验证码输入+提交 -->
-        <view wx:if="{{emailSent}}" class="email-verify-row">
-          <view class="email-input-row">
-            <text class="email-input-icon">🔢</text>
-            <input
-              class="email-input"
-              type="number"
-              placeholder="请输入6位验证码"
-              value="{{emailCode}}"
-              bindinput="onEmailCodeInput"
-              maxlength="6"
-            />
-          </view>
-          <view class="email-verify-actions">
-            <text class="email-countdown" wx:if="{{countdown > 0}}">{{countdown}}秒后可重发</text>
-            <text class="email-resend" wx:else bindtap="handleSendEmailCode">重新发送</text>
-            <button class="email-verify-btn" bindtap="handleBindEmail" loading="{{bindingEmail}}" disabled="{{bindingEmail || emailCode.length < 6}}">
-              验证绑定
-            </button>
-          </view>
-        </view>
-      </view>
-    </view>
-  </view>
-
-  <!-- 宠物信息（会员可见） -->
-  <view wx:if="{{isMember && pet}}" class="section">
-    <text class="section-title">🐾 我的宠物</text>
+  <!-- ========== 宠物信息（会员可见） ========== -->
+  <view wx:if="{{isMember && pet}}" class="pet-section">
+    <text class="section-label">我的伙伴</text>
     <view class="pet-card">
-      <view class="pet-avatar">
-        <text class="pet-emoji">{{pet.stage == 1 ? '🥚' : pet.stage == 2 ? (pet.pet_type == 'dog' ? '🐶' : pet.pet_type == 'bunny' ? '🐰' : pet.pet_type == 'panda' ? '🐼' : '🐱') : pet.stage == 3 ? (pet.pet_type == 'dog' ? '🐕' : pet.pet_type == 'bunny' ? '🐇' : pet.pet_type == 'panda' ? '🧸' : '😺') : (pet.pet_type == 'dog' ? '🦮' : pet.pet_type == 'bunny' ? '🐰✨' : pet.pet_type == 'panda' ? '🐼👑' : '🐱‍👤')}}</text>
+      <view class="pet-avatar-area">
+        <text class="pet-emoji-big">{{pet.stage == 1 ? '🥚' : pet.stage == 2 ? (pet.pet_type == 'dog' ? '🐶' : pet.pet_type == 'bunny' ? '🐰' : pet.pet_type == 'panda' ? '🐼' : '🐱') : pet.stage == 3 ? (pet.pet_type == 'dog' ? '🐕' : pet.pet_type == 'bunny' ? '🐇' : pet.pet_type == 'panda' ? '🧸' : '😺') : (pet.pet_type == 'dog' ? '🦮' : pet.pet_type == 'bunny' ? '🐰✨' : pet.pet_type == 'panda' ? '🐼👑' : '🐱‍👤')}}</text>
       </view>
-      <view class="pet-info">
-        <text class="pet-name">{{pet.pet_name}}</text>
-        <view class="pet-meta">
-          <text class="pet-stage">{{pet.stage_name}}</text>
-          <text class="pet-exp">经验 {{pet.exp}}</text>
+      <view class="pet-detail">
+        <view class="pet-name-row">
+          <text class="pet-display-name">{{pet.pet_name}}</text>
+          <text class="pet-stage-tag">{{pet.stage_name}}</text>
+          <view class="pet-rename-btn" bindtap="toggleRename">
+            <text>✏️</text>
+          </view>
+        </view>
+        <text class="pet-exp-text">经验值 {{pet.exp}}</text>
+        <view class="pet-double-bar">
+          <view class="pet-bar-item">
+            <text class="pet-bar-label">心情</text>
+            <view class="pet-bar-track"><view class="pet-bar-fill mood" style="width: {{pet.mood}}%"></view></view>
+          </view>
+          <view class="pet-bar-item">
+            <text class="pet-bar-label">饱腹</text>
+            <view class="pet-bar-track"><view class="pet-bar-fill hunger" style="width: {{pet.hunger}}%"></view></view>
+          </view>
         </view>
       </view>
-      <view class="pet-action" bindtap="toggleRename">
-        <text>✏️ 改名</text>
-      </view>
     </view>
-
-    <view wx:if="{{showRename}}" class="rename-panel">
-      <input class="rename-input" placeholder="给宠物取个新名字" maxlength="10" value="{{petName}}" bindinput="onPetNameInput" />
-      <button class="rename-btn" bindtap="handleRename">确认</button>
+    <view wx:if="{{showRename}}" class="pet-rename-panel">
+      <input class="pet-rename-input" placeholder="给宠物取个新名字" maxlength="10" value="{{petName}}" bindinput="onPetNameInput" />
+      <text class="pet-rename-confirm" bindtap="handleRename">确认</text>
     </view>
   </view>
 
-  <!-- 补签卡 -->
-  <view wx:if="{{isMember && makeupInfo}}" class="section">
-    <text class="section-title">🎫 补签卡</text>
+  <!-- ========== 补签卡（会员可见） ========== -->
+  <view wx:if="{{isMember && makeupInfo}}" class="makeup-section">
+    <text class="section-label">补签卡</text>
     <view class="makeup-card">
-      <view class="makeup-progress">
-        <view class="makeup-bar-bg">
+      <view class="makeup-progress-row">
+        <view class="makeup-bar-track">
           <view class="makeup-bar-fill" style="width: {{makeupInfo.remaining / makeupInfo.limit * 100}}%"></view>
         </view>
-        <text class="makeup-num">{{makeupInfo.remaining}}/{{makeupInfo.limit}}</text>
+        <text class="makeup-count">{{makeupInfo.remaining}}/{{makeupInfo.limit}}</text>
       </view>
-      <text class="makeup-note">每月自动重置额度</text>
+      <text class="makeup-hint">每月自动重置额度</text>
     </view>
   </view>
 
-  <!-- 功能入口 -->
-  <view class="section">
-    <text class="section-title">⚡ 功能入口</text>
+  <!-- ========== 功能入口 ========== -->
+  <view class="menu-section">
+    <text class="section-label">快捷入口</text>
     <view class="menu-list">
       <view class="menu-item" bindtap="goToCapsule">
-        <view class="menu-icon-box">
-          <text class="menu-icon">⏳</text>
+        <view class="menu-item-icon">⏳</view>
+        <view class="menu-item-text">
+          <text class="menu-item-title">时光胶囊</text>
+          <text class="menu-item-desc">记录美好，未来开启</text>
         </view>
-        <text class="menu-text">时光胶囊</text>
-        <text class="menu-desc">记录美好，未来开启</text>
-        <text class="menu-arrow">›</text>
+        <text class="menu-item-arrow">›</text>
       </view>
     </view>
   </view>
 
-  <!-- 底部占位 -->
   <view class="bottom-space"></view>
 </view>

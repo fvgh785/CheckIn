@@ -6,18 +6,24 @@ Page({
     membership: null,
     pet: null,
     makeupInfo: null,
-    petName: '',
-    showRename: false,
-    // 邮箱绑定
+    // 昵称编辑
+    showNicknameEdit: false,
+    nicknameInput: '',
     nickname: '',
+    // 邮箱绑定/换绑
     email: '',
     emailBound: false,
+    showRebind: false,
+    rebindEmail: '',
     emailCode: '',
     emailSent: false,
     countdown: 0,
     sendingCode: false,
     bindingEmail: false,
-    _countdownTimer: null
+    _countdownTimer: null,
+    // 宠物改名
+    petName: '',
+    showRename: false,
   },
 
   onShow() {
@@ -27,6 +33,8 @@ Page({
     this.loadData();
   },
 
+  onLoad() {},
+
   async loadData() {
     try {
       const memberRes = await app.request('/membership/status');
@@ -34,21 +42,36 @@ Page({
       if (memberRes.active) {
         this.loadMemberData();
       }
-      // 加载用户资料（昵称、邮箱）
       this.loadProfile();
     } catch (e) {
       if (e.statusCode === 401) app.handleAuthExpired();
     }
   },
 
+  // ======================== 昵称编辑 ========================
+
   async loadProfile() {
     try {
       const profile = await app.request('/auth/profile');
+      const bound = !!profile.email;
       this.setData({
         nickname: profile.nickname || '',
+        nicknameInput: profile.nickname || '',
         email: profile.email || '',
-        emailBound: !!profile.email
+        emailBound: bound,
+        // 每次切回页面都重置换绑状态
+        showRebind: false,
+        rebindEmail: '',
+        emailCode: '',
+        emailSent: false,
+        countdown: 0,
+        sendingCode: false,
+        bindingEmail: false,
       });
+      if (this.data._countdownTimer) {
+        clearInterval(this.data._countdownTimer);
+        this.data._countdownTimer = null;
+      }
     } catch (e) {
       if (e.statusCode !== 401) {
         console.error('加载用户资料失败:', e);
@@ -66,7 +89,80 @@ Page({
     } catch (e) { /* silent */ }
   },
 
-  // ======================== 邮箱绑定 ========================
+  // ======================== 昵称编辑 ========================
+
+  toggleNicknameEdit() {
+    const willEdit = !this.data.showNicknameEdit;
+    if (willEdit) {
+      this.setData({
+        showNicknameEdit: true,
+        nicknameInput: this.data.nickname
+      });
+    } else {
+      this.setData({ showNicknameEdit: false });
+    }
+  },
+
+  onNicknameInput(e) {
+    this.setData({ nicknameInput: e.detail.value });
+  },
+
+  async handleSaveNickname() {
+    const name = this.data.nicknameInput.trim();
+    if (!name) {
+      wx.showToast({ title: '请输入昵称', icon: 'none' });
+      return;
+    }
+    try {
+      await app.request('/auth/update-profile', {
+        method: 'POST',
+        data: { nickname: name }
+      });
+      wx.showToast({ title: '昵称已更新', icon: 'success' });
+      this.setData({ nickname: name, showNicknameEdit: false });
+    } catch (e) {
+      const msg = (e && e.data && e.data.error) || '更新失败';
+      wx.showToast({ title: msg, icon: 'none' });
+    }
+  },
+
+  // ======================== 邮箱绑定/换绑 ========================
+
+  toggleRebind() {
+    if (this.data.showRebind) {
+      // 取消换绑，回到已绑定展示状态
+      if (this.data._countdownTimer) {
+        clearInterval(this.data._countdownTimer);
+        this.data._countdownTimer = null;
+      }
+      this.setData({
+        showRebind: false,
+        rebindEmail: '',
+        emailCode: '',
+        emailSent: false,
+        countdown: 0,
+        sendingCode: false,
+        bindingEmail: false,
+        emailBound: true
+      });
+    } else {
+      // 进入换绑模式：预填当前邮箱，开始新邮箱验证流程
+      this.setData({
+        showRebind: true,
+        rebindEmail: this.data.email,
+        emailCode: '',
+        emailSent: false,
+        countdown: 0,
+        sendingCode: false,
+        bindingEmail: false,
+        emailBound: false
+      });
+    }
+  },
+
+  onRebindEmailInput(e) {
+    this.setData({ rebindEmail: e.detail.value.trim() });
+  },
 
   onEmailInput(e) {
     this.setData({ email: e.detail.value.trim() });
@@ -77,13 +173,18 @@ Page({
   },
 
   handleSendEmailCode() {
-    const { email } = this.data;
+    const email = this.data.showRebind ? this.data.rebindEmail : this.data.email;
     if (!email) {
       wx.showToast({ title: '请输入邮箱地址', icon: 'none' });
       return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       wx.showToast({ title: '邮箱格式不正确', icon: 'none' });
+      return;
+    }
+    // 换绑时若新邮箱与当前邮箱一致，无需重新绑定
+    if (this.data.showRebind && this.data.emailBound && email === this.data.email) {
+      wx.showToast({ title: '新邮箱与当前邮箱一致，无需换绑', icon: 'none' });
       return;
     }
 
@@ -110,6 +211,7 @@ Page({
       if (countdown <= 0) {
         clearInterval(timer);
         this.setData({ countdown: 0 });
+        this.data._countdownTimer = null;
       } else {
         this.setData({ countdown });
       }
@@ -118,7 +220,8 @@ Page({
   },
 
   handleBindEmail() {
-    const { email, emailCode } = this.data;
+    const email = this.data.showRebind ? this.data.rebindEmail : this.data.email;
+    const { emailCode } = this.data;
     if (!emailCode || emailCode.length < 6) {
       wx.showToast({ title: '请输入6位验证码', icon: 'none' });
       return;
@@ -131,11 +234,19 @@ Page({
       data: { email, code: emailCode }
     }).then(() => {
       wx.showToast({ title: '邮箱绑定成功', icon: 'success' });
+      if (this.data._countdownTimer) {
+        clearInterval(this.data._countdownTimer);
+        this.data._countdownTimer = null;
+      }
       this.setData({
+        email: email,
         emailBound: true,
+        showRebind: false,
+        rebindEmail: '',
         bindingEmail: false,
         emailCode: '',
-        emailSent: false
+        emailSent: false,
+        countdown: 0
       });
     }).catch((err) => {
       const msg = (err && err.data && err.data.error) || '绑定失败';

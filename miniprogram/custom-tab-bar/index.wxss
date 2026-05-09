@@ -44,8 +44,8 @@
 }
 
 .tab-item.active .tab-icon-wrap {
-  background: linear-gradient(135deg, #e8f0ff, #d4e4ff);
-  box-shadow: 0 4rpx 12rpx rgba(59, 130, 246, 0.15);
+  background: linear-gradient(135deg, #D4F1F0, #C5EDEB);
+  box-shadow: 0 4rpx 12rpx rgba(94, 191, 183, 0.2);
 }
 
 .tab-icon {
@@ -59,13 +59,13 @@
 }
 
 .tab-text {
-  font-size: 20rpx;
+  font-size: 24rpx;
   color: #b0b7c3;
   font-weight: 500;
   transition: all 0.3s ease;
 }
 
 .tab-item.active .tab-text {
-  color: #3b82f6;
+  color: #3DAFA8;
   font-weight: 700;
 }

@@ -974,9 +974,11 @@ def handle_get_config():
         config = get_system_config()
         makeup_limit = int(config.get('makeup_card_limit', '3'))
         cutoff_date = config.get('free_membership_cutoff_date', '')
+        insight_limit = int(config.get('insight_generation_limit', '3'))
         return jsonify({
             'makeup_card_limit': makeup_limit,
             'free_membership_cutoff_date': cutoff_date,
+            'insight_generation_limit': insight_limit,
             'membership_level': 'premium',
             'app_version': '1.0.0',
             'environment': {
@@ -1012,6 +1014,13 @@ def handle_update_config():
                     return jsonify({'error': '截止日期格式不正确，请使用YYYY-MM-DD格式'}), 400
             set_system_config('free_membership_cutoff_date', cutoff)
             updated_keys.append('free_membership_cutoff_date')
+
+        if 'insight_generation_limit' in data:
+            insight_limit = int(data['insight_generation_limit'])
+            if insight_limit < 0 or insight_limit > 20:
+                return jsonify({'error': 'AI洞察每日限额需在0-20之间'}), 400
+            set_system_config('insight_generation_limit', insight_limit)
+            updated_keys.append('insight_generation_limit')
 
         if not updated_keys:
             return jsonify({'success': False, 'message': '无有效配置项'}), 400

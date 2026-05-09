@@ -28,7 +28,21 @@
     <textarea class="capsule-textarea" placeholder="写给未来自己的信..." maxlength="500" value="{{content}}" bindinput="onContentInput" />
     <view class="days-picker">
       <text class="days-label">连续打卡多少天后解锁：</text>
-      <slider min="7" max="365" value="{{targetStreak}}" bindchange="onStreakChange" show-value />
+      <view class="preset-btns">
+        <view
+          wx:for="{{presetStreaks}}"
+          wx:key="*this"
+          class="preset-btn {{targetStreak === item ? 'active' : ''}}"
+          data-days="{{item}}"
+          bindtap="onStreakTap"
+        >{{item}}天</view>
+      </view>
+      <view class="custom-days-row">
+        <text class="custom-label">自定义：</text>
+        <input class="custom-input" type="number" placeholder="7-365" value="{{customStreak}}" bindinput="onStreakInput" />
+        <text class="custom-unit">天</text>
+      </view>
+      <text class="days-current">已选：{{targetStreak}} 天</text>
     </view>
     <button class="submit-btn" bindtap="handleCreate">封印胶囊</button>
   </view>

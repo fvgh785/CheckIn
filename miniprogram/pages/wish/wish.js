@@ -6,7 +6,9 @@ Page({
     loading: false,
     showCreate: false,
     content: '',
-    targetDays: 30
+    targetDays: 30,
+    customDays: '',
+    presetDays: [7, 15, 30, 60, 100, 365]
   },
 
   onShow() {
@@ -51,6 +53,20 @@ Page({
   onContentInput(e) { this.setData({ content: e.detail.value }); },
 
   onDaysChange(e) { this.setData({ targetDays: parseInt(e.detail.value) || 30 }); },
+
+  onDaysTap(e) {
+    const days = parseInt(e.currentTarget.dataset.days);
+    this.setData({ targetDays: days, customDays: '' });
+  },
+
+  onDaysInput(e) {
+    const val = e.detail.value;
+    this.setData({ customDays: val });
+    const days = parseInt(val);
+    if (days >= 7 && days <= 365) {
+      this.setData({ targetDays: days });
+    }
+  },
 
   toggleCreate() { this.setData({ showCreate: !this.data.showCreate }); }
 });

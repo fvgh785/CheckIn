@@ -7,6 +7,8 @@ Page({
     showCreate: false,
     content: '',
     targetStreak: 30,
+    customStreak: '',
+    presetStreaks: [7, 14, 21, 30, 60, 100],
     currentStreak: 0,
     openedCapsule: null
   },
@@ -83,5 +85,28 @@ Page({
 
   onContentInput(e) { this.setData({ content: e.detail.value }); },
   onStreakChange(e) { this.setData({ targetStreak: parseInt(e.detail.value) || 30 }); },
-  toggleCreate() { this.setData({ showCreate: !this.data.showCreate }); }
+  onStreakTap(e) {
+    const days = parseInt(e.currentTarget.dataset.days);
+    this.setData({ targetStreak: days, customStreak: '' });
+  },
+
+  onStreakInput(e) {
+    const val = e.detail.value;
+    this.setData({ customStreak: val });
+    const days = parseInt(val);
+    if (days >= 7 && days <= 365) {
+      this.setData({ targetStreak: days });
+    }
+  },
+
+  toggleCreate() {
+    const show = !this.data.showCreate;
+    this.setData({ showCreate: show });
+    if (show) {
+      // 延迟滚动，等待 DOM 渲染完成
+      setTimeout(() => {
+        wx.pageScrollTo({ selector: '.create-panel', duration: 300 });
+      }, 150);
+    }
+  }
 });

@@ -1,7 +1,7 @@
 .container {
   padding: 40rpx;
   min-height: 100vh;
-  background: #f8f9fa;
+  background: #F5FBFA;
 }
 
 .page-header {
@@ -12,13 +12,13 @@
 .page-title {
   font-size: 44rpx;
   font-weight: 800;
-  color: #1a1a1a;
+  color: #2C4A47;
   display: block;
 }
 
 .page-desc {
-  font-size: 26rpx;
-  color: #888;
+  font-size: 30rpx;
+  color: #6B9E99;
   margin-top: 8rpx;
 }
 
@@ -31,20 +31,20 @@
 }
 
 .insight-card.current {
-  border-left: 8rpx solid #8b5cf6;
-  background: linear-gradient(135deg, #faf5ff, white);
+  border-left: 8rpx solid #5EBFB7;
+  background: linear-gradient(135deg, #F0FAF9, white);
 }
 
 .card-badge {
-  font-size: 24rpx;
-  color: #8b5cf6;
+  font-size: 28rpx;
+  color: #5EBFB7;
   font-weight: 600;
   margin-bottom: 16rpx;
 }
 
 .insight-content {
-  font-size: 30rpx;
-  color: #374151;
+  font-size: 34rpx;
+  color: #2C4A47;
   line-height: 1.8;
 }
 
@@ -60,15 +60,15 @@
 }
 
 .empty-text {
-  font-size: 30rpx;
-  color: #374151;
+  font-size: 34rpx;
+  color: #2C4A47;
   font-weight: 500;
   display: block;
 }
 
 .empty-sub {
-  font-size: 24rpx;
-  color: #9ca3af;
+  font-size: 28rpx;
+  color: #8BB8B2;
   display: block;
   margin-top: 8rpx;
 }
@@ -78,16 +78,16 @@
 }
 
 .section-title {
-  font-size: 32rpx;
+  font-size: 36rpx;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #2C4A47;
   margin-bottom: 20rpx;
   display: block;
 }
 
 .history-date {
-  font-size: 24rpx;
-  color: #6b7280;
+  font-size: 28rpx;
+  color: #4A7A75;
   margin-bottom: 12rpx;
   display: block;
 }
@@ -95,5 +95,84 @@
 .loading {
   text-align: center;
   margin-top: 60rpx;
-  color: #999;
+  color: #6B9E99;
+}
+
+/* 生成按钮 */
+.generate-btn {
+  margin-top: 32rpx;
+  background: linear-gradient(135deg, #5EBFB7, #3DAFA8);
+  color: white;
+  border-radius: 16rpx;
+  font-size: 34rpx;
+  padding: 24rpx;
+  border: none;
+  width: 100%;
+}
+
+/* 重新生成行 */
+.regenerate-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 24rpx;
+  padding-top: 20rpx;
+  border-top: 1rpx solid #D4F1F0;
+}
+
+.regenerate-btn {
+  background: #C5EDEB;
+  color: #2C4A47;
+  border-radius: 10rpx;
+  font-size: 28rpx;
+  padding: 12rpx 28rpx;
+  border: none;
+}
+
+/* 配额提示 */
+.quota-tip {
+  font-size: 26rpx;
+  color: #8BB8B2;
+}
+
+.quota-tip.center {
+  display: block;
+  text-align: center;
+  margin-top: 16rpx;
+}
+
+.quota-exhausted {
+  font-size: 26rpx;
+  color: #C5A06A;
+}
+
+.quota-exhausted.center {
+  display: block;
+  text-align: center;
+  margin-top: 20rpx;
+}
+
+/* 生成中状态 */
+.generating-card {
+  text-align: center;
+  padding: 80rpx 40rpx;
+}
+
+.generating-emoji {
+  font-size: 80rpx;
+  display: block;
+  margin-bottom: 20rpx;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.generating-text {
+  font-size: 34rpx;
+  color: #4A7A75;
+  font-weight: 500;
+  display: block;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
 }

@@ -1,7 +1,7 @@
 .container {
   padding: 40rpx;
   min-height: 100vh;
-  background: #f8f9fa;
+  background: #F5FBFA;
 }
 
 .page-header {
@@ -12,13 +12,13 @@
 .page-title {
   font-size: 44rpx;
   font-weight: 800;
-  color: #1a1a1a;
+  color: #2C4A47;
   display: block;
 }
 
 .page-desc {
-  font-size: 26rpx;
-  color: #888;
+  font-size: 30rpx;
+  color: #6B9E99;
   margin-top: 8rpx;
 }
 
@@ -30,17 +30,17 @@
 }
 
 .squad-name {
-  font-size: 36rpx;
+  font-size: 40rpx;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #2C4A47;
   text-align: center;
 }
 
 .squad-code {
   text-align: center;
-  font-size: 24rpx;
-  color: #3b82f6;
-  background: #eff6ff;
+  font-size: 28rpx;
+  color: #5EBFB7;
+  background: #E8F7F6;
   padding: 8rpx 20rpx;
   border-radius: 12rpx;
   margin: 16rpx auto;
@@ -53,8 +53,8 @@
   justify-content: space-around;
   margin: 30rpx 0;
   padding: 24rpx 0;
-  border-top: 1rpx solid #f3f4f6;
-  border-bottom: 1rpx solid #f3f4f6;
+  border-top: 1rpx solid #D4F1F0;
+  border-bottom: 1rpx solid #D4F1F0;
 }
 
 .stat-item {
@@ -64,28 +64,28 @@
 .stat-val {
   font-size: 48rpx;
   font-weight: 800;
-  color: #3b82f6;
+  color: #5EBFB7;
   display: block;
 }
 
 .stat-label {
-  font-size: 22rpx;
-  color: #9ca3af;
+  font-size: 26rpx;
+  color: #8BB8B2;
 }
 
 .all-check-status {
   text-align: center;
   padding: 16rpx;
   border-radius: 12rpx;
-  background: #fef3c7;
-  font-size: 26rpx;
-  color: #92400e;
+  background: #D4F1F0;
+  font-size: 30rpx;
+  color: #2C4A47;
   margin-bottom: 24rpx;
 }
 
 .all-check-status.all-done {
-  background: #d1fae5;
-  color: #065f46;
+  background: #D4F1F0;
+  color: #2C4A47;
 }
 
 .member-list {
@@ -98,7 +98,7 @@
   display: flex;
   align-items: center;
   padding: 16rpx 20rpx;
-  background: #f9fafb;
+  background: #F0FAF9;
   border-radius: 12rpx;
 }
 
@@ -110,18 +110,18 @@
   align-items: center;
   justify-content: center;
   margin-right: 16rpx;
-  font-size: 24rpx;
+  font-size: 28rpx;
 }
 
-.member-id {
+.member-name {
   flex: 1;
-  font-size: 26rpx;
-  color: #374151;
+  font-size: 30rpx;
+  color: #2C4A47;
 }
 
 .member-status {
-  font-size: 24rpx;
-  color: #9ca3af;
+  font-size: 28rpx;
+  color: #8BB8B2;
 }
 
 .no-squad {
@@ -136,15 +136,15 @@
 }
 
 .no-squad-text {
-  font-size: 32rpx;
+  font-size: 36rpx;
   font-weight: 600;
-  color: #374151;
+  color: #2C4A47;
   display: block;
 }
 
 .no-squad-sub {
-  font-size: 24rpx;
-  color: #9ca3af;
+  font-size: 28rpx;
+  color: #8BB8B2;
   display: block;
   margin-top: 8rpx;
 }
@@ -158,19 +158,19 @@
 
 .action-btn {
   border-radius: 16rpx;
-  font-size: 28rpx;
+  font-size: 36rpx;
   padding: 20rpx 48rpx;
   border: none;
 }
 
 .action-btn.primary {
-  background: #3b82f6;
+  background: #5EBFB7;
   color: white;
 }
 
 .action-btn.secondary {
-  background: #e5e7eb;
-  color: #374151;
+  background: #C5EDEB;
+  color: #2C4A47;
 }
 
 .action-btn.small {
@@ -180,8 +180,8 @@
 
 .member-tip {
   margin-top: 20rpx;
-  font-size: 24rpx;
-  color: #f59e0b;
+  font-size: 28rpx;
+  color: #81D8D0;
 }
 
 .input-panel {
@@ -194,19 +194,19 @@
 
 .input-field {
   flex: 1;
-  border: 2rpx solid #d1d5db;
+  border: 2rpx solid #A8D5CF;
   border-radius: 16rpx;
   padding: 24rpx 28rpx;
-  font-size: 32rpx;
-  background: #fafbfc;
+  font-size: 36rpx;
+  background: #F5FBFA;
 }
 .input-field:focus {
-  border-color: #3b82f6;
+  border-color: #5EBFB7;
   background: #fff;
 }
 
 .loading {
   text-align: center;
   margin-top: 60rpx;
-  color: #999;
+  color: #6B9E99;
 }

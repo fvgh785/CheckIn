@@ -209,6 +209,15 @@ def init_db():
                 )
             ''')
             cur.execute('''
+                CREATE TABLE IF NOT EXISTS insight_generation_quota (
+                    user_id VARCHAR(36) NOT NULL,
+                    gen_date DATE NOT NULL,
+                    count INT DEFAULT 1,
+                    PRIMARY KEY (user_id, gen_date),
+                    FOREIGN KEY (user_id) REFERENCES users(id)
+                )
+            ''')
+            cur.execute('''
                 CREATE TABLE IF NOT EXISTS admins (
                     id VARCHAR(36) PRIMARY KEY,
                     username VARCHAR(50) NOT NULL UNIQUE,
@@ -261,6 +270,10 @@ def init_db():
                 cur.execute(
                     'INSERT INTO system_config (config_key, config_value) VALUES (%s, %s)',
                     ('free_membership_cutoff_date', '')
+                )
+                cur.execute(
+                    'INSERT INTO system_config (config_key, config_value) VALUES (%s, %s)',
+                    ('insight_generation_limit', '3')
                 )
             # 初始化默认超级管理员（必须通过环境变量设置凭据）
             try:

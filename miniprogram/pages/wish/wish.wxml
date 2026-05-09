@@ -29,10 +29,24 @@
   <button class="create-btn" bindtap="toggleCreate">+ 新建心愿</button>
 
   <view wx:if="{{showCreate}}" class="create-panel">
-    <input class="input-field" placeholder="输入心愿内容（如：奖励自己一顿大餐）" maxlength="100" value="{{content}}" bindinput="onContentInput" />
+    <textarea class="wish-textarea" placeholder="输入心愿内容（如：奖励自己一顿大餐）" maxlength="100" value="{{content}}" bindinput="onContentInput" auto-height />
     <view class="days-picker">
       <text class="days-label">目标天数：</text>
-      <slider min="7" max="365" value="{{targetDays}}" bindchange="onDaysChange" show-value />
+      <view class="preset-btns">
+        <view
+          wx:for="{{presetDays}}"
+          wx:key="*this"
+          class="preset-btn {{targetDays === item ? 'active' : ''}}"
+          data-days="{{item}}"
+          bindtap="onDaysTap"
+        >{{item}}天</view>
+      </view>
+      <view class="custom-days-row">
+        <text class="custom-label">自定义：</text>
+        <input class="custom-input" type="number" placeholder="7-365" value="{{customDays}}" bindinput="onDaysInput" />
+        <text class="custom-unit">天</text>
+      </view>
+      <text class="days-current">已选：{{targetDays}} 天</text>
     </view>
     <button class="submit-btn" bindtap="handleCreate">确认创建</button>
   </view>

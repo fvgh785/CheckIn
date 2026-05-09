@@ -12,7 +12,9 @@ from db_membership import (
     get_insight, get_insight_history,
     use_makeup_card, get_makeup_card_used_count, get_makeup_card_limit,
     is_member_active, activate_membership,
+    check_insight_quota, use_insight_quota,
 )
+from ai_insight import generate_insight_for_user
 from db_admin import get_config_value
 
 membership_bp = Blueprint('membership', __name__)
@@ -228,6 +230,54 @@ def handle_get_insight_history():
         return jsonify({'insights': history})
     except Exception:
         _logger.error(f'get_insight_history failed: {traceback.format_exc()}')
+        return jsonify({'error': '服务器内部错误'}), 500
+
+
+@membership_bp.route('/insight/generate', methods=['POST'])
+@membership_required
+def handle_generate_insight():
+    """手动触发生成本周AI洞察，每日上限3次"""
+    try:
+        user_id = g.user['userId']
+
+        # 检查配额
+        quota = check_insight_quota(user_id)
+        if quota['remaining'] <= 0:
+            return jsonify({
+                'success': False,
+                'message': f'今日已达上限（{quota["limit"]}次/天），请明天再来',
+                'quota': quota,
+            }), 429
+
+        # 消耗配额
+        use_result = use_insight_quota(user_id)
+        if not use_result['success']:
+            return jsonify({'success': False, 'message': use_result['message']}), 429
+
+        # 强制生成本周洞察
+        result = generate_insight_for_user(user_id, force=True)
+        if not result:
+            return jsonify({'success': False, 'message': '本周暂无打卡数据，无法生成洞察'}), 400
+
+        return jsonify({
+            'success': True,
+            'insight': result,
+            'quota': {'remaining': use_result['remaining'], 'limit': quota['limit']},
+        })
+    except Exception:
+        _logger.error(f'generate_insight failed: {traceback.format_exc()}')
+        return jsonify({'error': '服务器内部错误'}), 500
+
+
+@membership_bp.route('/insight/generate/quota', methods=['GET'])
+@membership_required
+def handle_get_insight_quota():
+    """查询今日手动生成洞察剩余次数"""
+    try:
+        quota = check_insight_quota(g.user['userId'])
+        return jsonify(quota)
+    except Exception:
+        _logger.error(f'get_insight_quota failed: {traceback.format_exc()}')
         return jsonify({'error': '服务器内部错误'}), 500
 
 

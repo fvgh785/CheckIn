@@ -5,13 +5,14 @@ import { getConfig, updateConfig } from '../../services/admin';
 
 const { Title } = Typography;
 
-interface Config { makeup_card_limit: number; free_membership_cutoff_date: string; membership_level: string; app_version: string; }
+interface Config { makeup_card_limit: number; free_membership_cutoff_date: string; insight_generation_limit: number; membership_level: string; app_version: string; }
 
 export default function SystemConfig() {
   const [config, setConfig] = useState<Config | null>(null);
   const [loading, setLoading] = useState(true);
   const [makeupLimit, setMakeupLimit] = useState(3);
   const [cutoffDate, setCutoffDate] = useState<string>('');
+  const [insightLimit, setInsightLimit] = useState(3);
 
   useEffect(() => { loadConfig(); }, []);
 
@@ -21,13 +22,14 @@ export default function SystemConfig() {
       setConfig(res.data);
       setMakeupLimit(res.data.makeup_card_limit);
       setCutoffDate(res.data.free_membership_cutoff_date || '');
+      setInsightLimit(res.data.insight_generation_limit ?? 3);
     }
     catch { /* handled */ } finally { setLoading(false); }
   };
 
   const handleSave = async () => {
     try {
-      await updateConfig({ makeup_card_limit: makeupLimit, free_membership_cutoff_date: cutoffDate });
+      await updateConfig({ makeup_card_limit: makeupLimit, free_membership_cutoff_date: cutoffDate, insight_generation_limit: insightLimit });
       message.success('配置已保存');
     }
     catch { /* handled */ }
@@ -57,6 +59,10 @@ export default function SystemConfig() {
             placeholder="选择日期（留空则关闭活动）"
             style={{ width: 220 }}
           />
+        </div>
+        <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 16 }}>
+          <span>AI洞察每日手动生成上限:</span>
+          <InputNumber min={0} max={20} value={insightLimit} onChange={(v) => setInsightLimit(v || 0)} />
         </div>
         <Button type="primary" onClick={handleSave}>保存配置</Button>
       </Card>

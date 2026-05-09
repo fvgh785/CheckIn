@@ -4,7 +4,9 @@ Page({
   data: {
     insight: null,
     insights: [],
-    loading: false
+    loading: false,
+    generating: false,
+    quota: { remaining: 0, limit: 3 }
   },
 
   onShow() {
@@ -17,13 +19,15 @@ Page({
   async loadData() {
     this.setData({ loading: true });
     try {
-      const [weekly, history] = await Promise.all([
+      const [weekly, history, quotaData] = await Promise.all([
         app.request('/insight/weekly'),
-        app.request('/insight/history')
+        app.request('/insight/history'),
+        app.request('/insight/generate/quota')
       ]);
       this.setData({
         insight: weekly && weekly.content ? weekly : null,
-        insights: history.insights || []
+        insights: history.insights || [],
+        quota: quotaData || { remaining: 0, limit: 3 }
       });
     } catch (e) {
       if (e.statusCode === 401) {
@@ -33,6 +37,46 @@ Page({
       }
     } finally {
       this.setData({ loading: false });
+    }
+  },
+
+  async handleGenerate() {
+    if (this.data.generating) return;
+
+    wx.showLoading({ title: '生成中...', mask: true });
+    this.setData({ generating: true });
+
+    try {
+      const res = await app.request('/insight/generate', { method: 'POST' });
+      if (res.success) {
+        wx.showToast({ title: '洞察已生成！', icon: 'success' });
+        this.setData({
+          insight: res.insight,
+          quota: res.quota
+        });
+        // 刷新历史列表
+        this.loadData();
+      } else {
+        wx.showToast({ title: res.message || '生成失败', icon: 'none' });
+        // 刷新配额
+        try {
+          const quotaData = await app.request('/insight/generate/quota');
+          this.setData({ quota: quotaData });
+        } catch (e) { /* ignore */ }
+      }
+    } catch (e) {
+      if (e.statusCode === 429) {
+        wx.showToast({ title: '今日次数已用完', icon: 'none' });
+        this.setData({ quota: { remaining: 0, limit: this.data.quota.limit } });
+      } else if (e.statusCode === 400) {
+        const msg = (e.data && e.data.message) ? e.data.message : '暂无打卡数据';
+        wx.showToast({ title: msg, icon: 'none' });
+      } else {
+        wx.showToast({ title: '生成失败，请稍后重试', icon: 'none' });
+      }
+    } finally {
+      this.setData({ generating: false });
+      wx.hideLoading();
     }
   }
 });
