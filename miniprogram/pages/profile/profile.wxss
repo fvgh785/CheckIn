@@ -162,39 +162,116 @@
   opacity: 0.6;
 }
 
-/* 邮箱表单 */
-.info-email-form {
+/* 邮箱编辑器对齐修正 */
+.info-row.email-editing {
+  align-items: flex-start;
+}
+
+.info-label.email-label-top {
+  padding-top: 10rpx;
+}
+
+.email-form {
   flex: 1;
-}
-
-.info-email-form .info-edit-input {
-  width: 100%;
-  margin-bottom: 12rpx;
-}
-
-.info-email-actions {
-  display: flex;
-  align-items: center;
-  gap: 20rpx;
-  justify-content: flex-end;
-}
-
-.info-email-verify {
+  min-width: 0;
   display: flex;
   flex-direction: column;
+  gap: 14rpx;
+}
+
+/* 输入行：邮箱 + 发送按钮 */
+.email-input-row {
+  display: flex;
+  align-items: center;
   gap: 12rpx;
 }
 
-.info-verify-actions {
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
-  justify-content: flex-end;
+.email-input {
+  flex: 1;
+  min-width: 0;
+  height: 60rpx;
+  border: 2rpx solid #C5EDEB;
+  border-radius: 14rpx;
+  padding: 0 20rpx;
+  font-size: 28rpx;
+  color: #2C4A47;
+  background: #F5FBFA;
+  box-sizing: border-box;
 }
 
-.info-countdown {
-  font-size: 28rpx;
+.email-input:focus {
+  border-color: #5EBFB7;
+  background: #FFFFFF;
+}
+
+.email-code-input {
+  max-width: 190rpx;
+}
+
+/* 发送验证码按钮 */
+.email-btn {
+  flex-shrink: 0;
+  height: 60rpx;
+  line-height: 60rpx;
+  padding: 0 22rpx;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #FFFFFF;
+  background: linear-gradient(135deg, #5EBFB7, #3DAFA8);
+  border-radius: 14rpx;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.email-btn.primary {
+  background: linear-gradient(135deg, #5EBFB7, #3DAFA8);
+}
+
+.email-btn:active {
+  opacity: 0.85;
+}
+
+/* 验证码行 */
+.email-code-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.email-countdown {
+  flex-shrink: 0;
+  font-size: 26rpx;
   color: #6B9E99;
+  white-space: nowrap;
+}
+
+.email-resend {
+  flex-shrink: 0;
+  font-size: 26rpx;
+  color: #5EBFB7;
+  white-space: nowrap;
+}
+
+.email-resend:active {
+  opacity: 0.7;
+}
+
+/* 底部操作行 */
+.email-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 20rpx;
+}
+
+.email-cancel {
+  font-size: 28rpx;
+  color: #8BB8B2;
+  padding: 4rpx 0;
+}
+
+.email-cancel:active {
+  opacity: 0.6;
 }
 
 /* ========== 会员状态卡片 ========== */

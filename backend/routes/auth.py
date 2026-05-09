@@ -70,7 +70,7 @@ def handle_get_profile():
 @auth_bp.route('/send-email-code', methods=['POST'])
 @auth_required
 def handle_send_email_code():
-    """发送邮箱验证码"""
+    """发送邮箱验证码（绑定/换绑通用）"""
     data = request.get_json(silent=True) or {}
     email = data.get('email', '').strip()
 
@@ -81,6 +81,28 @@ def handle_send_email_code():
     import re
     if not re.match(r'^[^\s@]+@[^\s@]+\.[^\s@]+$', email):
         return jsonify({'error': '邮箱格式不正确'}), 400
+
+    # 获取当前用户已绑定的邮箱
+    current_profile = get_user_profile(g.user['openId'])
+    current_email = (current_profile.get('email') or '').strip()
+
+    # 若新邮箱与当前已绑定邮箱一致，无需换绑
+    if current_email and email == current_email:
+        return jsonify({'error': '新邮箱与当前邮箱一致，无需换绑', 'code': 'SAME_EMAIL'}), 400
+
+    # 校验该邮箱是否已被其他账号绑定
+    from db import get_connection
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                'SELECT id FROM users WHERE email = %s AND open_id != %s',
+                (email, g.user['openId'])
+            )
+            if cur.fetchone():
+                return jsonify({'error': '该邮箱已被其他账号绑定', 'code': 'EMAIL_TAKEN'}), 400
+    finally:
+        conn.close()
 
     # 生成并保存验证码
     code = generate_email_code()

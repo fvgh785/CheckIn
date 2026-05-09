@@ -19,8 +19,8 @@
         </view>
       </view>
       <!-- 邮箱行 -->
-      <view class="info-row">
-        <text class="info-label">邮箱</text>
+      <view class="info-row {{showRebind ? 'email-editing' : ''}}">
+        <text class="info-label {{showRebind ? 'email-label-top' : ''}}">邮箱</text>
         <!-- 已绑定 + 非换绑模式 -->
         <view wx:if="{{emailBound && !showRebind}}" class="info-value-row">
           <text class="info-value email-value">{{email}}</text>
@@ -32,19 +32,26 @@
           <text class="info-edit-tag highlight" bindtap="toggleRebind">绑定</text>
         </view>
         <!-- 换绑/绑定模式 -->
-        <view wx:else class="info-email-form">
-          <input class="info-edit-input" type="text" placeholder="请输入邮箱地址" value="{{rebindEmail}}" bindinput="onRebindEmailInput" maxlength="50" disabled="{{emailSent}}" />
-          <view wx:if="{{!emailSent}}" class="info-email-actions">
-            <text class="info-edit-cancel" bindtap="toggleRebind">取消</text>
-            <text class="info-edit-confirm" bindtap="handleSendEmailCode">发送验证码</text>
+        <view wx:else class="email-form">
+          <!-- 输入 + 发送按钮 -->
+          <view class="email-input-row">
+            <input class="email-input" type="text" placeholder="请输入邮箱地址" value="{{rebindEmail}}" bindinput="onRebindEmailInput" maxlength="50" disabled="{{emailSent}}" />
+            <text wx:if="{{!emailSent}}" class="email-btn" bindtap="handleSendEmailCode">发送验证码</text>
           </view>
-          <view wx:if="{{emailSent}}" class="info-email-verify">
-            <input class="info-edit-input code-input" type="number" placeholder="6位验证码" value="{{emailCode}}" bindinput="onEmailCodeInput" maxlength="6" />
-            <view class="info-verify-actions">
-              <text wx:if="{{countdown > 0}}" class="info-countdown">{{countdown}}s</text>
-              <text wx:else class="info-edit-tag" bindtap="handleSendEmailCode">重发</text>
-              <text class="info-edit-confirm" bindtap="handleBindEmail">确认绑定</text>
-            </view>
+          <!-- 验证码行 -->
+          <view wx:if="{{emailSent}}" class="email-code-row">
+            <input class="email-input email-code-input" type="number" placeholder="6位验证码" value="{{emailCode}}" bindinput="onEmailCodeInput" maxlength="6" />
+            <block wx:if="{{countdown > 0}}">
+              <text class="email-countdown">{{countdown}}s</text>
+            </block>
+            <block wx:else>
+              <text class="email-resend" bindtap="handleSendEmailCode">重发验证码</text>
+            </block>
+          </view>
+          <!-- 底部操作 -->
+          <view class="email-bottom">
+            <text class="email-cancel" bindtap="toggleRebind">取消</text>
+            <text wx:if="{{emailSent}}" class="email-btn primary" bindtap="handleBindEmail">确认绑定</text>
           </view>
         </view>
       </view>

@@ -182,11 +182,6 @@ Page({
       wx.showToast({ title: '邮箱格式不正确', icon: 'none' });
       return;
     }
-    // 换绑时若新邮箱与当前邮箱一致，无需重新绑定
-    if (this.data.showRebind && this.data.emailBound && email === this.data.email) {
-      wx.showToast({ title: '新邮箱与当前邮箱一致，无需换绑', icon: 'none' });
-      return;
-    }
 
     this.setData({ sendingCode: true });
 
