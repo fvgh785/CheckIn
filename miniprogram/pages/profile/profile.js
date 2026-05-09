@@ -54,23 +54,32 @@ Page({
     try {
       const profile = await app.request('/auth/profile');
       const bound = !!profile.email;
-      this.setData({
-        nickname: profile.nickname || '',
-        nicknameInput: profile.nickname || '',
-        email: profile.email || '',
-        emailBound: bound,
-        // 每次切回页面都重置换绑状态
-        showRebind: false,
-        rebindEmail: '',
-        emailCode: '',
-        emailSent: false,
-        countdown: 0,
-        sendingCode: false,
-        bindingEmail: false,
-      });
-      if (this.data._countdownTimer) {
-        clearInterval(this.data._countdownTimer);
-        this.data._countdownTimer = null;
+      if (this.data.showRebind) {
+        // 换绑流程中：只刷新基本信息，保留换绑状态不重置
+        this.setData({
+          nickname: profile.nickname || '',
+          nicknameInput: profile.nickname || '',
+          email: profile.email || '',
+          emailBound: bound,
+        });
+      } else {
+        this.setData({
+          nickname: profile.nickname || '',
+          nicknameInput: profile.nickname || '',
+          email: profile.email || '',
+          emailBound: bound,
+          showRebind: false,
+          rebindEmail: '',
+          emailCode: '',
+          emailSent: false,
+          countdown: 0,
+          sendingCode: false,
+          bindingEmail: false,
+        });
+        if (this.data._countdownTimer) {
+          clearInterval(this.data._countdownTimer);
+          this.data._countdownTimer = null;
+        }
       }
     } catch (e) {
       if (e.statusCode !== 401) {
