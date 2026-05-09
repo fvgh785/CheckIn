@@ -1,5 +1,5 @@
 .container {
-  padding: 40rpx;
+  padding: 40rpx 40rpx 160rpx;
   min-height: 100vh;
   background: #F5FBFA;
 }
