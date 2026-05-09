@@ -706,7 +706,16 @@ def get_insight_history(user_id, limit=10):
 
 # ======================== 补签卡 ========================
 
-MAKEUP_CARD_LIMIT = 3  # 每月最多3张
+from db_admin import get_config_value, DEFAULT_MAKEUP_CARD_LIMIT
+
+
+def get_makeup_card_limit():
+    """从数据库动态读取补签卡月限额"""
+    try:
+        val = get_config_value('makeup_card_limit')
+        return int(val) if val else DEFAULT_MAKEUP_CARD_LIMIT
+    except Exception:
+        return DEFAULT_MAKEUP_CARD_LIMIT
 
 
 def get_makeup_card_used_count(user_id):
@@ -733,6 +742,7 @@ def use_makeup_card(user_id, target_date):
     try:
         today = date.today()
         month_start = today.replace(day=1)
+        limit = get_makeup_card_limit()
 
         with conn.cursor() as cur:
             # 在同一事务中完成计数检查+插入，避免并发超限
@@ -741,8 +751,8 @@ def use_makeup_card(user_id, target_date):
                 (user_id, month_start)
             )
             used = cur.fetchone()['cnt']
-            if used >= MAKEUP_CARD_LIMIT:
-                return {'success': False, 'message': f'本月补签卡已用完（{MAKEUP_CARD_LIMIT}张/月）'}
+            if used >= limit:
+                return {'success': False, 'message': f'本月补签卡已用完（{limit}张/月）'}
 
             card_id = str(uuid.uuid4())
             cur.execute(
@@ -760,7 +770,7 @@ def use_makeup_card(user_id, target_date):
         return {
             'success': True,
             'message': f'补签成功：{target_date}',
-            'cards_remaining': MAKEUP_CARD_LIMIT - used - 1,
+            'cards_remaining': limit - used - 1,
         }
     except pymysql.err.IntegrityError:
         return {'success': False, 'message': '该日期已打卡或已补签'}

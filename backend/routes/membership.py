@@ -10,8 +10,10 @@ from db_membership import (
     create_wish, get_wishes, update_wish_progress,
     create_capsule, get_capsules, open_capsule,
     get_insight, get_insight_history,
-    use_makeup_card, get_makeup_card_used_count, MAKEUP_CARD_LIMIT
+    use_makeup_card, get_makeup_card_used_count, get_makeup_card_limit,
+    is_member_active, activate_membership,
 )
+from db_admin import get_config_value
 
 membership_bp = Blueprint('membership', __name__)
 _logger = logging.getLogger(__name__)
@@ -261,11 +263,78 @@ def handle_makeup():
 def handle_makeup_info():
     try:
         used = get_makeup_card_used_count(g.user['userId'])
+        limit = get_makeup_card_limit()
         return jsonify({
             'used': used,
-            'limit': MAKEUP_CARD_LIMIT,
-            'remaining': max(0, MAKEUP_CARD_LIMIT - used),
+            'limit': limit,
+            'remaining': max(0, limit - used),
         })
     except Exception:
         _logger.error(f'makeup_info failed: {traceback.format_exc()}')
+        return jsonify({'error': '服务器内部错误'}), 500
+
+
+# ======================== 免费赠送会员 ========================
+
+@membership_bp.route('/membership/free-trial', methods=['POST'])
+@auth_required
+def handle_free_trial():
+    """检查用户是否符合免费赠送会员条件（注册日期在截止日期之前）"""
+    try:
+        cutoff_date_str = get_config_value('free_membership_cutoff_date')
+        if not cutoff_date_str:
+            return jsonify({'success': False, 'message': '当前暂无免费会员活动'}), 400
+
+        try:
+            cutoff_date = date.fromisoformat(cutoff_date_str)
+        except ValueError:
+            return jsonify({'error': '截止日期配置错误'}), 500
+
+        # 检查是否已经是会员
+        if is_member_active(g.user['userId']):
+            return jsonify({'success': False, 'message': '您已是会员，无需重复领取'}), 400
+
+        # 检查是否曾经领取过（已有过会员记录）
+        from db import get_connection
+        conn = get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    'SELECT COUNT(*) as cnt FROM memberships WHERE user_id = %s',
+                    (g.user['userId'],)
+                )
+                if cur.fetchone()['cnt'] > 0:
+                    return jsonify({'success': False, 'message': '您已领取过免费会员'}), 400
+        finally:
+            conn.close()
+
+        # 获取用户注册时间
+        conn = get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute('SELECT created_at FROM users WHERE id = %s', (g.user['userId'],))
+                row = cur.fetchone()
+                if not row:
+                    return jsonify({'error': '用户不存在'}), 404
+                user_created = row['created_at']
+        finally:
+            conn.close()
+
+        # 判断注册时间是否在截止日期之前
+        if isinstance(user_created, datetime):
+            user_created_date = user_created.date()
+        else:
+            user_created_date = user_created
+
+        if user_created_date >= cutoff_date:
+            return jsonify({'success': False, 'message': f'仅限{cutoff_date_str}之前注册的用户参与'}), 400
+
+        # 开通一个月会员
+        result = activate_membership(g.user['userId'], 1)
+        if result['success']:
+            return jsonify({'success': True, 'message': '恭喜！已免费赠送您一个月会员'})
+        return jsonify(result), 400
+
+    except Exception:
+        _logger.error(f'free_trial failed: {traceback.format_exc()}')
         return jsonify({'error': '服务器内部错误'}), 500

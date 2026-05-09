@@ -32,7 +32,7 @@ api.interceptors.response.use(
       } else if (status === 403) {
         message.error(data?.error || '无权限执行此操作');
       } else {
-        message.error(data?.error || '请求失败');
+        message.error(data?.error || data?.message || '请求失败');
       }
     }
     return Promise.reject(error);

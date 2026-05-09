@@ -115,7 +115,7 @@ export default function MainLayout() {
     const path = location.pathname;
     if (path === '/') return '/';
     for (const item of menuItems || []) {
-      if (item && 'key' in item && typeof item.key === 'string' && path.startsWith(item.key)) {
+      if (item && 'key' in item && typeof item.key === 'string' && item.key !== '/' && path.startsWith(item.key)) {
         return item.key;
       }
       if (item && 'children' in item) {

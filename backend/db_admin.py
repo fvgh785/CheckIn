@@ -332,6 +332,60 @@ def get_admin_logs(page=1, page_size=50, admin_id=None, action=None, target_type
         conn.close()
 
 
+# ======================== 系统配置 ========================
+
+DEFAULT_MAKEUP_CARD_LIMIT = 3
+
+
+def get_system_config():
+    """读取所有系统配置，返回 dict"""
+    init_db()
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT config_key, config_value FROM system_config')
+            rows = cur.fetchall()
+            config = {}
+            for r in rows:
+                config[r['config_key']] = r['config_value']
+            return config
+    finally:
+        conn.close()
+
+
+def get_config_value(key, default=None):
+    """读取单个配置值"""
+    init_db()
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT config_value FROM system_config WHERE config_key = %s', (key,))
+            row = cur.fetchone()
+            return row['config_value'] if row else default
+    finally:
+        conn.close()
+
+
+def set_system_config(key, value):
+    """设置系统配置，value 转为字符串存储"""
+    init_db()
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                'INSERT INTO system_config (config_key, config_value) VALUES (%s, %s) '
+                'ON DUPLICATE KEY UPDATE config_value = VALUES(config_value)',
+                (key, str(value))
+            )
+            conn.commit()
+            return True
+    except Exception:
+        _logger.error(f'set_system_config failed: {traceback.format_exc()}')
+        return False
+    finally:
+        conn.close()
+
+
 # ======================== 数据看板统计 ========================
 
 def get_dashboard_stats():

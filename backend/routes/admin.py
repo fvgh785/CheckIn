@@ -16,6 +16,7 @@ from db_admin import (
     create_admin, update_admin, delete_admin,
     write_admin_log, get_admin_logs, get_dashboard_stats,
     increment_admin_token_version, validate_password_strength,
+    get_system_config, set_system_config, get_config_value,
 )
 from limiter import limiter
 
@@ -969,14 +970,22 @@ def handle_log_list():
 @admin_required
 def handle_get_config():
     """获取系统配置"""
-    return jsonify({
-        'makeup_card_limit': 3,
-        'membership_level': 'premium',
-        'app_version': '1.0.0',
-        'environment': {
-            'admin_jwt_secret_set': bool(True),  # 不暴露实际密钥
-        }
-    })
+    try:
+        config = get_system_config()
+        makeup_limit = int(config.get('makeup_card_limit', '3'))
+        cutoff_date = config.get('free_membership_cutoff_date', '')
+        return jsonify({
+            'makeup_card_limit': makeup_limit,
+            'free_membership_cutoff_date': cutoff_date,
+            'membership_level': 'premium',
+            'app_version': '1.0.0',
+            'environment': {
+                'admin_jwt_secret_set': bool(True),
+            }
+        })
+    except Exception:
+        _logger.error(f'get_config failed: {traceback.format_exc()}')
+        return jsonify({'error': '服务器内部错误'}), 500
 
 
 @admin_bp.route('/config', methods=['PUT'])
@@ -984,6 +993,32 @@ def handle_get_config():
 def handle_update_config():
     """更新系统配置"""
     data = request.get_json(silent=True) or {}
-    # 目前仅做记录，配置实际存储在环境变量中
-    write_admin_log(g.admin['id'], 'update', 'config', None, f'更新系统配置: {_sanitize_detail(data)}')
-    return jsonify({'success': False, 'message': '配置管理功能尚未实现，请通过环境变量或重启服务修改配置'}), 501
+
+    updated_keys = []
+    try:
+        if 'makeup_card_limit' in data:
+            limit = int(data['makeup_card_limit'])
+            if limit < 0 or limit > 10:
+                return jsonify({'error': '补签卡月限额需在0-10之间'}), 400
+            set_system_config('makeup_card_limit', limit)
+            updated_keys.append('makeup_card_limit')
+
+        if 'free_membership_cutoff_date' in data:
+            cutoff = data['free_membership_cutoff_date']
+            if cutoff:
+                try:
+                    date.fromisoformat(cutoff)
+                except ValueError:
+                    return jsonify({'error': '截止日期格式不正确，请使用YYYY-MM-DD格式'}), 400
+            set_system_config('free_membership_cutoff_date', cutoff)
+            updated_keys.append('free_membership_cutoff_date')
+
+        if not updated_keys:
+            return jsonify({'success': False, 'message': '无有效配置项'}), 400
+
+        write_admin_log(g.admin['id'], 'update', 'config', None,
+                        f'更新系统配置: {_sanitize_detail(data)}')
+        return jsonify({'success': True, 'message': '配置已保存'})
+    except Exception:
+        _logger.error(f'update_config failed: {traceback.format_exc()}')
+        return jsonify({'error': '服务器内部错误'}), 500

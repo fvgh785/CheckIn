@@ -244,6 +244,24 @@ def init_db():
                     FOREIGN KEY (admin_id) REFERENCES admins(id)
                 )
             ''')
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS system_config (
+                    config_key VARCHAR(64) PRIMARY KEY,
+                    config_value TEXT NOT NULL,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                )
+            ''')
+            # 初始化默认配置（仅在表为空时插入）
+            cur.execute('SELECT COUNT(*) as cnt FROM system_config')
+            if cur.fetchone()['cnt'] == 0:
+                cur.execute(
+                    'INSERT INTO system_config (config_key, config_value) VALUES (%s, %s)',
+                    ('makeup_card_limit', '3')
+                )
+                cur.execute(
+                    'INSERT INTO system_config (config_key, config_value) VALUES (%s, %s)',
+                    ('free_membership_cutoff_date', '')
+                )
             # 初始化默认超级管理员（必须通过环境变量设置凭据）
             try:
                 from werkzeug.security import generate_password_hash
