@@ -89,6 +89,59 @@ def activate_membership(user_id, months):
         conn.close()
 
 
+def auto_grant_free_membership(user_id):
+    """新用户注册时自动赠送免费会员（静默执行，不抛异常）
+    
+    条件：
+    1. 后台已配置 free_membership_cutoff_date
+    2. 当前日期 <= 截止日期
+    3. 用户尚未是有效会员
+    4. 用户从未有过会员记录（防止重复赠送）
+    """
+    try:
+        from db_admin import get_config_value
+
+        cutoff_date_str = get_config_value('free_membership_cutoff_date')
+        if not cutoff_date_str:
+            return  # 未配置截止日期，不赠送
+
+        try:
+            cutoff_date = date.fromisoformat(cutoff_date_str)
+        except ValueError:
+            _logger.warning(f'Invalid free_membership_cutoff_date: {cutoff_date_str}')
+            return
+
+        # 当前日期已过截止日期，不赠送
+        if date.today() > cutoff_date:
+            return
+
+        # 检查是否已经是有效会员
+        if is_member_active(user_id):
+            return
+
+        # 检查是否曾经有过会员记录（防止重复赠送）
+        init_db()
+        conn = get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    'SELECT COUNT(*) as cnt FROM memberships WHERE user_id = %s',
+                    (user_id,)
+                )
+                if cur.fetchone()['cnt'] > 0:
+                    return  # 已有会员记录，不再赠送
+        finally:
+            conn.close()
+
+        # 赠送1个月会员
+        activate_membership(user_id, 1)
+        _logger.info(f'Auto granted free 1-month membership to user {user_id}')
+
+    except Exception:
+        _logger.error(f'auto_grant_free_membership failed for user {user_id}: {traceback.format_exc()}')
+        # 静默失败，不影响登录流程
+
+
 # ======================== 虚拟宠物 ========================
 
 PET_STAGES = {1: '蛋', 2: '幼崽', 3: '成年', 4: '传说'}

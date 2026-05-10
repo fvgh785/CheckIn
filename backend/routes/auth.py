@@ -4,6 +4,7 @@ import traceback
 from flask import Blueprint, request, jsonify, g
 import requests
 from db import login, update_user_profile, get_user_profile, save_email_verification_code, verify_email_code, bind_email_to_user, generate_email_code, send_verification_email
+from db_membership import auto_grant_free_membership
 from middleware.auth import auth_required
 
 auth_bp = Blueprint('auth', __name__)
@@ -46,6 +47,12 @@ def handle_login():
     except Exception:
         _logger.error(f'login failed for openid={result.get("openid")}: {traceback.format_exc()}')
         return jsonify({'error': '服务器内部错误'}), 500
+
+    # 新用户注册时自动尝试赠送免费会员（静默执行，不影响登录）
+    try:
+        auto_grant_free_membership(session['user_id'])
+    except Exception:
+        _logger.warning(f'Auto free trial check failed: {traceback.format_exc()}')
 
     return jsonify({
         'token': session['token'],
