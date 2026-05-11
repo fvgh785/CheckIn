@@ -48,8 +48,20 @@
   </view>
 
   <!-- 补签卡信息（会员可见） -->
-  <view wx:if="{{isMember && makeupInfo}}" class="makeup-bar">
-    <text class="makeup-text">🩹 补签卡：剩余 {{makeupInfo.remaining}}/{{makeupInfo.limit}} 张</text>
+  <picker wx:if="{{isMember && makeupInfo && makeupInfo.remaining > 0}}" mode="date" value="{{makeupDate}}" start="{{makeupStartDate}}" end="{{makeupEndDate}}" bindchange="handleMakeupDateChange" class="makeup-picker">
+    <view class="makeup-bar">
+      <view class="makeup-text">
+        <view class="makeup-icon"></view>
+        <text>补签卡：剩余 {{makeupInfo.remaining}}/{{makeupInfo.limit}} 张</text>
+      </view>
+      <text class="makeup-arrow">›</text>
+    </view>
+  </picker>
+  <view wx:elif="{{isMember && makeupInfo && makeupInfo.remaining <= 0}}" class="makeup-bar makeup-bar-empty">
+    <view class="makeup-text">
+      <view class="makeup-icon"></view>
+      <text>补签卡：剩余 {{makeupInfo.remaining}}/{{makeupInfo.limit}} 张</text>
+    </view>
   </view>
 
   <!-- 数据面板 -->

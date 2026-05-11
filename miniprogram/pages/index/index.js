@@ -15,7 +15,10 @@ Page({
     // 宠物数据
     pet: null,
     // 补签卡
-    makeupInfo: null
+    makeupInfo: null,
+    makeupDate: '',
+    makeupStartDate: '',
+    makeupEndDate: ''
   },
 
   onLoad() {
@@ -119,7 +122,16 @@ Page({
   async fetchMakeupInfo() {
     try {
       const res = await app.request('/checkin/makeup/info');
-      this.setData({ makeupInfo: res });
+      // 计算可选日期范围：当月1号 ~ 昨天
+      const now = new Date();
+      const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+      const yesterday = new Date(now.getTime() - 86400000);
+      const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
+      this.setData({
+        makeupInfo: res,
+        makeupStartDate: monthStart,
+        makeupEndDate: yesterdayStr
+      });
     } catch (e) {
       console.error('获取补签卡信息失败:', e);
     }
@@ -181,5 +193,29 @@ Page({
 
   handleGoMembership() {
     wx.switchTab({ url: '/pages/profile/profile' });
+  },
+
+  // ======================== 补签卡 ========================
+
+  async handleMakeupDateChange(e) {
+    const targetDate = e.detail.value;
+    if (!targetDate) return;
+
+    this.setData({ loading: true });
+    try {
+      const res = await app.request('/checkin/makeup', {
+        method: 'POST',
+        data: { date: targetDate }
+      });
+      wx.showToast({ title: `已补签 ${targetDate}`, icon: 'success' });
+      // 刷新补签卡信息和打卡统计
+      this.fetchMakeupInfo();
+      this.fetchStats();
+    } catch (e) {
+      const msg = (e && e.data && e.data.error) || (e && e.data && e.data.message) || '补签失败';
+      wx.showToast({ title: msg, icon: 'none' });
+    } finally {
+      this.setData({ loading: false });
+    }
   }
 });

@@ -273,17 +273,46 @@
 }
 
 /* 补签卡信息条 */
+.makeup-picker {
+  margin: 32rpx 0;
+}
+
 .makeup-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
+}
+
+.makeup-bar-empty {
   margin: 32rpx 0;
 }
 
 .makeup-text {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
   font-size: 28rpx;
   color: #4A7A75;
   background: #E8F7F6;
   padding: 8rpx 24rpx;
   border-radius: 20rpx;
+}
+
+.makeup-icon {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  background: #5EBFB7;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 4rpx rgba(94, 191, 183, 0.2);
+}
+
+.makeup-arrow {
+  font-size: 36rpx;
+  color: #5EBFB7;
+  margin-left: 8rpx;
+  font-weight: 700;
 }
 
 .loading {
