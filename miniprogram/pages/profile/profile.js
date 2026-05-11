@@ -2,6 +2,7 @@ const app = getApp();
 
 Page({
   data: {
+    isLoggedIn: false,
     isMember: false,
     membership: null,
     pet: null,
@@ -30,10 +31,31 @@ Page({
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ selected: 4 });
     }
-    this.loadData();
+    this.checkLoginStatus();
   },
 
   onLoad() {},
+
+  checkLoginStatus() {
+    const token = app.globalData.token || wx.getStorageSync('token');
+    if (token) {
+      app.globalData.token = token;
+      this.setData({ isLoggedIn: true });
+      this.loadData();
+    } else {
+      this.setData({
+        isLoggedIn: false,
+        isMember: false,
+        membership: null,
+        pet: null,
+        makeupInfo: null,
+        nickname: '',
+        nicknameInput: '',
+        email: '',
+        emailBound: false
+      });
+    }
+  },
 
   async loadData() {
     try {
@@ -101,6 +123,10 @@ Page({
   // ======================== 昵称编辑 ========================
 
   toggleNicknameEdit() {
+    if (!this.data.isLoggedIn) {
+      wx.navigateTo({ url: '/pages/login/login' });
+      return;
+    }
     const willEdit = !this.data.showNicknameEdit;
     if (willEdit) {
       this.setData({
@@ -117,6 +143,10 @@ Page({
   },
 
   async handleSaveNickname() {
+    if (!this.data.isLoggedIn) {
+      wx.navigateTo({ url: '/pages/login/login' });
+      return;
+    }
     const name = this.data.nicknameInput.trim();
     if (!name) {
       wx.showToast({ title: '请输入昵称', icon: 'none' });
@@ -138,6 +168,10 @@ Page({
   // ======================== 邮箱绑定/换绑 ========================
 
   toggleRebind() {
+    if (!this.data.isLoggedIn) {
+      wx.navigateTo({ url: '/pages/login/login' });
+      return;
+    }
     if (this.data.showRebind) {
       // 取消换绑，回到已绑定展示状态
       if (this.data._countdownTimer) {
@@ -182,6 +216,10 @@ Page({
   },
 
   handleSendEmailCode() {
+    if (!this.data.isLoggedIn) {
+      wx.navigateTo({ url: '/pages/login/login' });
+      return;
+    }
     const email = this.data.showRebind ? this.data.rebindEmail : this.data.email;
     if (!email) {
       wx.showToast({ title: '请输入邮箱地址', icon: 'none' });
@@ -224,6 +262,10 @@ Page({
   },
 
   handleBindEmail() {
+    if (!this.data.isLoggedIn) {
+      wx.navigateTo({ url: '/pages/login/login' });
+      return;
+    }
     const email = this.data.showRebind ? this.data.rebindEmail : this.data.email;
     const { emailCode } = this.data;
     if (!emailCode || emailCode.length < 6) {
@@ -262,6 +304,10 @@ Page({
   // ======================== 宠物操作 ========================
 
   async handleRename() {
+    if (!this.data.isLoggedIn) {
+      wx.navigateTo({ url: '/pages/login/login' });
+      return;
+    }
     const name = this.data.petName.trim();
     if (!name) {
       wx.showToast({ title: '请输入新名字', icon: 'none' });
@@ -282,10 +328,24 @@ Page({
 
   onPetNameInput(e) { this.setData({ petName: e.detail.value }); },
 
-  toggleRename() { this.setData({ showRename: !this.data.showRename }); },
+  toggleRename() {
+    if (!this.data.isLoggedIn) {
+      wx.navigateTo({ url: '/pages/login/login' });
+      return;
+    }
+    this.setData({ showRename: !this.data.showRename });
+  },
 
   goToCapsule() {
+    if (!this.data.isLoggedIn) {
+      wx.navigateTo({ url: '/pages/login/login' });
+      return;
+    }
     wx.navigateTo({ url: '/pages/capsule/capsule' });
+  },
+
+  goLogin() {
+    wx.navigateTo({ url: '/pages/login/login' });
   },
 
   onUnload() {

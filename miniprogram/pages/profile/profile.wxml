@@ -1,4 +1,14 @@
 <view class="container">
+  <!-- ========== 未登录引导 ========== -->
+  <view wx:if="{{!isLoggedIn}}" class="login-guide-card">
+    <text class="login-guide-emoji">🔐</text>
+    <text class="login-guide-title">请先登录</text>
+    <text class="login-guide-desc">登录后可编辑个人资料、管理会员等</text>
+    <button class="login-guide-btn" bindtap="goLogin">去登录</button>
+  </view>
+
+  <!-- ========== 已登录内容 ========== -->
+  <block wx:else>
   <!-- ========== 用户信息卡片 ========== -->
   <view class="info-card">
     <view class="info-avatar">
@@ -143,4 +153,5 @@
   </view>
 
   <view class="bottom-space"></view>
+  </block>
 </view>

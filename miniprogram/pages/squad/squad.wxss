@@ -210,3 +210,17 @@
   margin-top: 60rpx;
   color: #6B9E99;
 }
+
+/* 未登录引导 */
+.login-guide {
+  margin-top: 40rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.login-guide-text {
+  font-size: 30rpx;
+  color: #8BB8B2;
+}

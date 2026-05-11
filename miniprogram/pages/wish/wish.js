@@ -2,6 +2,7 @@ const app = getApp();
 
 Page({
   data: {
+    isLoggedIn: false,
     wishes: [],
     loading: false,
     showCreate: false,
@@ -15,7 +16,25 @@ Page({
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ selected: 3 });
     }
-    this.loadWishes();
+    this.checkLoginStatus();
+  },
+
+  checkLoginStatus() {
+    const token = app.globalData.token || wx.getStorageSync('token');
+    if (token) {
+      app.globalData.token = token;
+      this.setData({ isLoggedIn: true });
+      this.loadWishes();
+    } else {
+      this.setData({
+        isLoggedIn: false,
+        wishes: [],
+        showCreate: false,
+        content: '',
+        targetDays: 30,
+        customDays: ''
+      });
+    }
   },
 
   async loadWishes() {
@@ -32,6 +51,10 @@ Page({
   },
 
   async handleCreate() {
+    if (!this.data.isLoggedIn) {
+      wx.navigateTo({ url: '/pages/login/login' });
+      return;
+    }
     const content = this.data.content.trim();
     if (!content) {
       wx.showToast({ title: '请输入心愿内容', icon: 'none' });
@@ -68,5 +91,15 @@ Page({
     }
   },
 
-  toggleCreate() { this.setData({ showCreate: !this.data.showCreate }); }
+  toggleCreate() {
+    if (!this.data.isLoggedIn) {
+      wx.navigateTo({ url: '/pages/login/login' });
+      return;
+    }
+    this.setData({ showCreate: !this.data.showCreate });
+  },
+
+  goLogin() {
+    wx.navigateTo({ url: '/pages/login/login' });
+  }
 });

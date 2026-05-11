@@ -98,6 +98,29 @@
   color: #6B9E99;
 }
 
+/* 未登录引导 */
+.login-guide {
+  text-align: center;
+  padding: 80rpx 40rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.login-guide-emoji {
+  font-size: 80rpx;
+  display: block;
+  margin-bottom: 20rpx;
+}
+
+.login-guide-text {
+  font-size: 34rpx;
+  color: #2C4A47;
+  font-weight: 500;
+  display: block;
+}
+
 /* 生成按钮 */
 .generate-btn {
   margin-top: 32rpx;

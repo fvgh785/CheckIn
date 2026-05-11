@@ -4,6 +4,15 @@
     <text class="page-desc">AI分析你的打卡习惯，给出专属建议</text>
   </view>
 
+  <!-- 未登录提示 -->
+  <view wx:if="{{!isLoggedIn}}" class="login-guide">
+    <text class="login-guide-emoji">🔐</text>
+    <text class="login-guide-text">请先登录后查看AI周报</text>
+    <button class="generate-btn" bindtap="goLogin">去登录</button>
+  </view>
+
+  <!-- 已登录内容 -->
+  <block wx:else>
   <!-- 本周洞察 -->
   <view wx:if="{{insight}}" class="insight-card current">
     <view class="card-badge">📊 本周洞察</view>
@@ -41,4 +50,5 @@
   <view wx:if="{{loading}}" class="loading">
     <text>加载中...</text>
   </view>
+  </block>
 </view>

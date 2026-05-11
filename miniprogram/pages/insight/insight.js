@@ -2,6 +2,7 @@ const app = getApp();
 
 Page({
   data: {
+    isLoggedIn: false,
     insight: null,
     insights: [],
     loading: false,
@@ -13,7 +14,23 @@ Page({
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ selected: 2 });
     }
-    this.loadData();
+    this.checkLoginStatus();
+  },
+
+  checkLoginStatus() {
+    const token = app.globalData.token || wx.getStorageSync('token');
+    if (token) {
+      app.globalData.token = token;
+      this.setData({ isLoggedIn: true });
+      this.loadData();
+    } else {
+      this.setData({
+        isLoggedIn: false,
+        insight: null,
+        insights: [],
+        quota: { remaining: 0, limit: 3 }
+      });
+    }
   },
 
   async loadData() {
@@ -41,6 +58,10 @@ Page({
   },
 
   async handleGenerate() {
+    if (!this.data.isLoggedIn) {
+      wx.navigateTo({ url: '/pages/login/login' });
+      return;
+    }
     if (this.data.generating) return;
 
     wx.showLoading({ title: '生成中...', mask: true });
@@ -78,5 +99,9 @@ Page({
       this.setData({ generating: false });
       wx.hideLoading();
     }
+  },
+
+  goLogin() {
+    wx.navigateTo({ url: '/pages/login/login' });
   }
 });

@@ -47,26 +47,35 @@
     <text class="no-squad-text">你还没有加入小队</text>
     <text class="no-squad-sub">创建或加入一个小队，和好友互相监督打卡</text>
 
-    <view class="action-btns">
-      <button class="action-btn primary" bindtap="toggleCreate" wx:if="{{isMember}}">创建小队</button>
-      <button class="action-btn secondary" bindtap="toggleJoin">加入小队</button>
+    <!-- 未登录提示 -->
+    <view wx:if="{{!isLoggedIn}}" class="login-guide">
+      <text class="login-guide-text">请先登录后再操作</text>
+      <button class="action-btn primary" bindtap="goLogin">去登录</button>
     </view>
 
-    <view wx:if="{{!isMember}}" class="member-tip">
-      <text>💡 创建小队需要开通会员</text>
-    </view>
+    <!-- 已登录 -->
+    <block wx:else>
+      <view class="action-btns">
+        <button class="action-btn primary" bindtap="toggleCreate" wx:if="{{isMember}}">创建小队</button>
+        <button class="action-btn secondary" bindtap="toggleJoin">加入小队</button>
+      </view>
 
-    <!-- 创建面板 -->
-    <view wx:if="{{showCreate}}" class="input-panel">
-      <input class="input-field" placeholder="输入小队名称（最多20字）" maxlength="20" value="{{squadName}}" bindinput="onNameInput" />
-      <button class="action-btn primary small" bindtap="handleCreate">确认创建</button>
-    </view>
+      <view wx:if="{{!isMember}}" class="member-tip">
+        <text>💡 创建小队需要开通会员</text>
+      </view>
 
-    <!-- 加入面板 -->
-    <view wx:if="{{showJoin}}" class="input-panel">
-      <input class="input-field" placeholder="输入6位邀请码" maxlength="6" value="{{inviteCode}}" bindinput="onCodeInput" />
-      <button class="action-btn secondary small" bindtap="handleJoin">确认加入</button>
-    </view>
+      <!-- 创建面板 -->
+      <view wx:if="{{showCreate}}" class="input-panel">
+        <input class="input-field" placeholder="输入小队名称（最多20字）" maxlength="20" value="{{squadName}}" bindinput="onNameInput" />
+        <button class="action-btn primary small" bindtap="handleCreate">确认创建</button>
+      </view>
+
+      <!-- 加入面板 -->
+      <view wx:if="{{showJoin}}" class="input-panel">
+        <input class="input-field" placeholder="输入6位邀请码" maxlength="6" value="{{inviteCode}}" bindinput="onCodeInput" />
+        <button class="action-btn secondary small" bindtap="handleJoin">确认加入</button>
+      </view>
+    </block>
   </view>
 
   <view wx:if="{{loading}}" class="loading">

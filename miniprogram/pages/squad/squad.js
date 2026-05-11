@@ -2,6 +2,7 @@ const app = getApp();
 
 Page({
   data: {
+    isLoggedIn: false,
     hasSquad: false,
     squad: null,
     isMember: false,
@@ -16,7 +17,25 @@ Page({
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ selected: 1 });
     }
-    this.checkStatus();
+    this.checkLoginStatus();
+  },
+
+  checkLoginStatus() {
+    const token = app.globalData.token || wx.getStorageSync('token');
+    if (token) {
+      app.globalData.token = token;
+      this.setData({ isLoggedIn: true });
+      this.checkStatus();
+    } else {
+      this.setData({
+        isLoggedIn: false,
+        isMember: false,
+        hasSquad: false,
+        squad: null,
+        showCreate: false,
+        showJoin: false
+      });
+    }
   },
 
   async checkStatus() {
@@ -49,6 +68,10 @@ Page({
   },
 
   async handleCreate() {
+    if (!this.data.isLoggedIn) {
+      wx.navigateTo({ url: '/pages/login/login' });
+      return;
+    }
     if (!this.data.isMember) {
       wx.showToast({ title: '创建小队需要会员', icon: 'none' });
       return;
@@ -74,6 +97,10 @@ Page({
   },
 
   async handleJoin() {
+    if (!this.data.isLoggedIn) {
+      wx.navigateTo({ url: '/pages/login/login' });
+      return;
+    }
     const code = this.data.inviteCode.trim().toUpperCase();
     if (!code) {
       wx.showToast({ title: '请输入邀请码', icon: 'none' });
@@ -107,10 +134,22 @@ Page({
   },
 
   toggleCreate() {
+    if (!this.data.isLoggedIn) {
+      wx.navigateTo({ url: '/pages/login/login' });
+      return;
+    }
     this.setData({ showCreate: !this.data.showCreate, showJoin: false });
   },
 
   toggleJoin() {
+    if (!this.data.isLoggedIn) {
+      wx.navigateTo({ url: '/pages/login/login' });
+      return;
+    }
     this.setData({ showJoin: !this.data.showJoin, showCreate: false });
+  },
+
+  goLogin() {
+    wx.navigateTo({ url: '/pages/login/login' });
   }
 });
