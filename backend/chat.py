@@ -26,7 +26,7 @@ COLLECTION_NAME = 'knowledge_bases'
 _chroma_client = None
 _collection = None
 _vector_store_initialized = False
-_lock = threading.Lock()
+_lock = threading.RLock()
 
 # ======================== 向量存储初始化 ========================
 
@@ -402,7 +402,7 @@ def get_chat_history(user_id, page=1, page_size=20):
 
 
 def get_knowledge_bases():
-    """获取所有已启用的知识库列表"""
+    """获取所有已启用的知识库列表（按标题去重，保留最先出现的）"""
     init_db()
     conn = get_connection()
     try:
@@ -412,13 +412,18 @@ def get_knowledge_bases():
             )
             rows = cur.fetchall()
             result = []
+            seen_titles = set()
             for r in rows:
+                title = r['title']
+                if title in seen_titles:
+                    continue
+                seen_titles.add(title)
                 content = r['content']
                 # 生成摘要：前80字
                 summary = content[:80] + '...' if len(content) > 80 else content
                 result.append({
                     'id': r['id'],
-                    'title': r['title'],
+                    'title': title,
                     'summary': summary,
                     'category': r['category'],
                     'created_at': str(r['created_at']),

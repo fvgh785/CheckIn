@@ -13,7 +13,10 @@ Page({
     page: 1,
     hasMore: true,
     scrollToView: '',
-    chatEnabled: true
+    chatEnabled: true,
+    // 知识库详情弹窗
+    kbModalVisible: false,
+    kbDetail: null
   },
 
   onLoad() {
@@ -166,16 +169,18 @@ Page({
     try {
       const kb = await app.request(`/chat/knowledge-bases/${id}`);
       wx.hideLoading();
-      wx.showModal({
-        title: kb.title,
-        content: kb.content,
-        showCancel: false,
-        confirmText: '知道了'
+      this.setData({
+        kbModalVisible: true,
+        kbDetail: kb
       });
     } catch (err) {
       wx.hideLoading();
       wx.showToast({ title: '加载失败', icon: 'none' });
     }
+  },
+
+  closeKBModal() {
+    this.setData({ kbModalVisible: false, kbDetail: null });
   },
 
   toggleKnowledge() {

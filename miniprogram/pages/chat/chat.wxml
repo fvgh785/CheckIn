@@ -100,4 +100,22 @@
       </button>
     </view>
   </block>
+
+  <!-- 知识库详情弹窗 -->
+  <view wx:if="{{kbModalVisible && kbDetail}}" class="kb-modal-mask" bindtap="closeKBModal">
+    <view class="kb-modal" catchtap="">
+      <view class="kb-modal-header">
+        <text class="kb-modal-title">{{kbDetail.title}}</text>
+        <view class="kb-modal-close" bindtap="closeKBModal">
+          <text>✕</text>
+        </view>
+      </view>
+      <scroll-view class="kb-modal-body" scroll-y>
+        <text class="kb-modal-content">{{kbDetail.content}}</text>
+        <view wx:if="{{kbDetail.category}}" class="kb-modal-footer">
+          <text class="kb-modal-category">分类：{{kbDetail.category}}</text>
+        </view>
+      </scroll-view>
+    </view>
+  </view>
 </view>

@@ -1123,6 +1123,15 @@ def handle_knowledge_bases_create():
     try:
         conn = get_connection()
         try:
+            # 检查重复标题
+            with conn.cursor() as cur:
+                cur.execute(
+                    'SELECT id FROM knowledge_bases WHERE title = %s LIMIT 1',
+                    (title,)
+                )
+                if cur.fetchone():
+                    return jsonify({'error': '已存在相同标题的知识库条目，请修改标题或编辑已有条目'}), 409
+
             kb_id = str(uuid.uuid4())
             with conn.cursor() as cur:
                 cur.execute(

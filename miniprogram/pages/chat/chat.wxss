@@ -277,3 +277,87 @@
   background: #C5EDEB;
   color: white;
 }
+
+/* 知识库详情弹窗 */
+.kb-modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kb-modal {
+  width: 86%;
+  max-height: 70vh;
+  background: white;
+  border-radius: 20rpx;
+  overflow: hidden;
+  box-shadow: 0 16rpx 48rpx rgba(0, 0, 0, 0.12);
+}
+
+.kb-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 28rpx 32rpx;
+  border-bottom: 1rpx solid #E8F7F6;
+}
+
+.kb-modal-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #2C4A47;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kb-modal-close {
+  width: 48rpx;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 16rpx;
+  flex-shrink: 0;
+}
+
+.kb-modal-close text {
+  font-size: 32rpx;
+  color: #8BB8B2;
+}
+
+.kb-modal-body {
+  padding: 28rpx 32rpx 32rpx;
+  max-height: 52vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.kb-modal-content {
+  font-size: 30rpx;
+  color: #2C4A47;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow-wrap: break-word;
+  width: 100%;
+}
+
+.kb-modal-footer {
+  margin-top: 24rpx;
+  padding-top: 20rpx;
+  border-top: 1rpx solid #F0FAF9;
+}
+
+.kb-modal-category {
+  font-size: 24rpx;
+  color: #A8D5CF;
+}
