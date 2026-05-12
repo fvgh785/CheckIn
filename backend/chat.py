@@ -20,7 +20,12 @@ AI_MODEL = os.environ.get('AI_MODEL', 'deepseek-chat')
 
 
 def build_rag_context(user_message):
-    """使用 jieba 中文分词 + 关键词匹配从知识库检索 Top-3 最相关条目"""
+    """使用 jieba 中文分词 + 关键词匹配从知识库检索 Top-3 最相关条目
+    
+    策略：
+    1. jieba 分词提取关键词，按精确命中计数打分（标题×3，内容×1）
+    2. 若关键词匹配无结果，回退到 MySQL LIKE 模糊搜索
+    """
     if not user_message or not AI_API_KEY:
         return ''
 
@@ -30,9 +35,6 @@ def build_rag_context(user_message):
                   '看', '好', '自己', '这', '他', '她', '它', '们', '那', '什么', '怎么',
                   '如何', '为什么', '哪', '吗', '吧', '呢', '啊', '哦', '嗯'}
     keywords = [w for w in jieba.cut(user_message) if len(w) > 1 and w not in stop_words]
-
-    if not keywords:
-        return ''
 
     # 查询所有已启用的知识库条目
     init_db()
@@ -47,9 +49,10 @@ def build_rag_context(user_message):
         conn.close()
 
     if not rows:
+        _logger.warning('build_rag_context: no enabled knowledge base entries found in DB')
         return ''
 
-    # 计算每条知识库条目的关键词匹配得分
+    # 策略1：关键词精确匹配计分
     scored = []
     for row in rows:
         title = row['title']
@@ -64,7 +67,35 @@ def build_rag_context(user_message):
         if score > 0:
             scored.append((score, title, full_text))
 
+    # 策略2：关键词匹配无结果时，回退到 MySQL LIKE 模糊搜索
+    if not scored and keywords:
+        _logger.info(
+            'build_rag_context: keyword exact match failed for "%s" (keywords=%s), falling back to LIKE search',
+            user_message[:50], keywords
+        )
+        conn = get_connection()
+        try:
+            with conn.cursor() as cur:
+                # 用每个关键词做 LIKE 搜索
+                like_clauses = []
+                like_params = []
+                for kw in keywords:
+                    like_clauses.append('(title LIKE %s OR content LIKE %s)')
+                    like_params.extend([f'%{kw}%', f'%{kw}%'])
+
+                sql = 'SELECT id, title, content, category FROM knowledge_bases WHERE enabled = 1 AND (' + ' OR '.join(like_clauses) + ')'
+                cur.execute(sql, like_params)
+                like_rows = cur.fetchall()
+        finally:
+            conn.close()
+
+        for row in like_rows:
+            full_text = f"{row['title']}\n{row['content']}"
+            # LIKE 命中的给基础分 1，保证能参与排序
+            scored.append((1, row['title'], full_text))
+
     if not scored:
+        _logger.info('build_rag_context: no matches found for "%s" (keywords=%s)', user_message[:50], keywords)
         return ''
 
     # 按得分降序排列，取 Top-3
@@ -77,6 +108,7 @@ def build_rag_context(user_message):
         display_text = text if len(text) <= 500 else text[:500] + '...'
         snippets.append(f'【{title}】\n{display_text}')
 
+    _logger.info('build_rag_context: matched %d entries for "%s"', len(top_results), user_message[:30])
     return '\n\n---\n\n'.join(snippets)
 
 
