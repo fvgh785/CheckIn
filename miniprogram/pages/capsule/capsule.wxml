@@ -8,7 +8,7 @@
     <view wx:for="{{capsules}}" wx:key="id" class="capsule-card {{item.status == 1 ? 'opened' : 'sealed'}}">
       <text class="capsule-emoji">{{item.status == 1 ? '📜' : '🔒'}}</text>
       <view class="capsule-info">
-        <text class="capsule-preview">{{item.status == 1 ? item.content : item.preview}}</text>
+        <text class="capsule-preview">{{item.content}}</text>
         <text class="capsule-date">封印于 {{item.created_at}}</text>
         <text wx:if="{{item.status == 0}}" class="capsule-target">需要连续 {{item.target_streak}} 天打卡解锁</text>
         <text wx:if="{{item.status == 1}}" class="capsule-opened-date">已于 {{item.opened_at}} 开启</text>

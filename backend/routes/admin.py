@@ -656,7 +656,7 @@ def handle_capsule_list():
                     'id': r['id'],
                     'user_id': r['user_id'],
                     'open_id': r['open_id'][:20] + '...' if len(r['open_id']) > 20 else r['open_id'],
-                    'content': r['content'][:50] + '...' if len(r['content']) > 50 else r['content'],
+                    'content': (r['content'][:50] + '...' if len(r['content']) > 50 else r['content']) if r['status'] == 1 else '🔒 封印中...',
                     'target_streak': r['target_streak'],
                     'created_streak': r['created_streak'],
                     'status': r['status'],

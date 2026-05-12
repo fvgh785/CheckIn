@@ -642,9 +642,9 @@ def get_capsules(user_id):
                     item['content'] = r['content'][:50] + '...' if len(r['content']) > 50 else r['content']
                     item['full_content'] = r['content']
                 else:
-                    item['content'] = '🔒 封印中...'
+                    # 未开启，不暴露任何内容
+                    item['content'] = '封印中...'
                     item['full_content'] = None
-                    item['preview'] = r['content'][:20] + '...' if len(r['content']) > 20 else r['content']
                 result.append(item)
             return result
     finally:
