@@ -5,7 +5,7 @@ from middleware.auth import auth_required
 from chat import (
     check_chat_quota, pre_check_chat_quota, save_chat_message,
     get_chat_history, chat_with_ai, get_knowledge_bases, get_knowledge_base_detail,
-    is_chat_enabled, init_vector_store,
+    is_chat_enabled,
 )
 
 chat_bp = Blueprint('chat', __name__)

@@ -2,13 +2,11 @@ import os
 import uuid
 import json
 import logging
-import threading
 import traceback
 from datetime import date, datetime
 
 import requests
-import chromadb
-from chromadb.config import Settings
+import jieba
 
 from db import get_connection, init_db
 
@@ -17,77 +15,26 @@ _logger = logging.getLogger(__name__)
 AI_API_KEY = os.environ.get('AI_API_KEY', '')
 AI_API_URL = os.environ.get('AI_API_URL', 'https://api.deepseek.com/v1/chat/completions')
 AI_MODEL = os.environ.get('AI_MODEL', 'deepseek-chat')
-EMBEDDING_URL = os.environ.get('EMBEDDING_URL', 'https://api.deepseek.com/v1/embeddings')
-EMBEDDING_MODEL = os.environ.get('EMBEDDING_MODEL', 'deepseek-chat')
 
-CHROMA_PERSIST_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'chroma_db')
-COLLECTION_NAME = 'knowledge_bases'
-
-_chroma_client = None
-_collection = None
-_vector_store_initialized = False
-_lock = threading.RLock()
-
-# ======================== 向量存储初始化 ========================
+# ======================== 知识库关键词检索 ========================
 
 
-def _get_chroma_client():
-    """懒加载 Chroma 客户端（线程安全）"""
-    global _chroma_client
-    if _chroma_client is None:
-        with _lock:
-            if _chroma_client is None:
-                os.makedirs(CHROMA_PERSIST_DIR, exist_ok=True)
-                _chroma_client = chromadb.PersistentClient(
-                    path=CHROMA_PERSIST_DIR,
-                    settings=Settings(anonymized_telemetry=False),
-                )
-    return _chroma_client
+def build_rag_context(user_message):
+    """使用 jieba 中文分词 + 关键词匹配从知识库检索 Top-3 最相关条目"""
+    if not user_message or not AI_API_KEY:
+        return ''
 
+    # jieba 中文分词提取关键词（过滤单字和停用词）
+    stop_words = {'的', '了', '在', '是', '我', '有', '和', '就', '不', '人', '都', '一',
+                  '一个', '上', '也', '很', '到', '说', '要', '去', '你', '会', '着', '没有',
+                  '看', '好', '自己', '这', '他', '她', '它', '们', '那', '什么', '怎么',
+                  '如何', '为什么', '哪', '吗', '吧', '呢', '啊', '哦', '嗯'}
+    keywords = [w for w in jieba.cut(user_message) if len(w) > 1 and w not in stop_words]
 
-def _get_collection():
-    """获取或创建 collection（线程安全）"""
-    global _collection
-    if _collection is None:
-        with _lock:
-            if _collection is None:
-                client = _get_chroma_client()
-                try:
-                    _collection = client.get_collection(COLLECTION_NAME)
-                except Exception:
-                    _collection = client.create_collection(COLLECTION_NAME)
-    return _collection
+    if not keywords:
+        return ''
 
-
-def _get_embedding(text):
-    """调用 DeepSeek Embedding API 获取向量"""
-    if not AI_API_KEY:
-        _logger.warning('AI_API_KEY not configured, using fallback embedding')
-        return [0.0] * 1024  # fallback
-
-    try:
-        headers = {
-            'Authorization': f'Bearer {AI_API_KEY}',
-            'Content-Type': 'application/json',
-        }
-        body = {
-            'model': EMBEDDING_MODEL,
-            'input': text,
-        }
-        resp = requests.post(EMBEDDING_URL, headers=headers, json=body, timeout=30)
-        resp.raise_for_status()
-        result = resp.json()
-        return result['data'][0]['embedding']
-    except Exception:
-        _logger.error(f'Embedding API call failed: {traceback.format_exc()}')
-        # fallback: simple hash-based embedding for graceful degradation
-        import hashlib
-        h = hashlib.sha256(text.encode()).digest()
-        return [float(b) / 255.0 for b in h[:1024]]
-
-
-def init_vector_store():
-    """启动时/首次调用时从 knowledge_bases 表构建向量索引"""
+    # 查询所有已启用的知识库条目
     init_db()
     conn = get_connection()
     try:
@@ -100,115 +47,35 @@ def init_vector_store():
         conn.close()
 
     if not rows:
-        _logger.info('No enabled knowledge bases found, skipping vector store init')
-        return
+        return ''
 
-    collection = _get_collection()
-
-    ids = []
-    documents = []
-    metadatas = []
-    embeddings = []
-
+    # 计算每条知识库条目的关键词匹配得分
+    scored = []
     for row in rows:
-        kb_id = row['id']
-        full_text = f"{row['title']}\n{row['content']}"
-        emb = _get_embedding(full_text)
+        title = row['title']
+        content = row['content']
+        full_text = f"{title}\n{content}"
+        score = 0
+        for kw in keywords:
+            # 标题命中权重 3x
+            score += title.lower().count(kw.lower()) * 3
+            # 内容命中权重 1x
+            score += content.lower().count(kw.lower())
+        if score > 0:
+            scored.append((score, title, full_text))
 
-        ids.append(kb_id)
-        documents.append(full_text)
-        metadatas.append({
-            'id': kb_id,
-            'title': row['title'],
-            'category': row['category'],
-        })
-        embeddings.append(emb)
-
-    # 清空并重建
-    try:
-        existing = collection.get()
-        if existing.get('ids'):
-            collection.delete(ids=existing['ids'])
-    except Exception:
-        pass
-
-    if ids:
-        collection.add(ids=ids, documents=documents, metadatas=metadatas, embeddings=embeddings)
-        _logger.info(f'Vector store initialized with {len(ids)} knowledge bases')
-
-
-def rebuild_vector_store():
-    """公开接口，admin 修改知识库后调用重建（线程安全）"""
-    global _collection, _vector_store_initialized
-    with _lock:
-        _collection = None  # 重置，下次 _get_collection 会重新获取
-        init_vector_store()
-        _vector_store_initialized = True
-
-
-# ======================== RAG 检索 ========================
-
-
-def _ensure_vector_store():
-    """惰性初始化向量存储（首次 RAG 调用时触发，避免阻塞 worker 启动）"""
-    global _vector_store_initialized
-    if _vector_store_initialized:
-        return
-    with _lock:
-        if _vector_store_initialized:
-            return
-        # 带重试的初始化
-        for attempt in range(1, 4):
-            try:
-                init_vector_store()
-                _vector_store_initialized = True
-                _logger.info('Vector store lazily initialized')
-                return
-            except Exception:
-                _logger.error(
-                    f'init_vector_store attempt {attempt}/3 failed: {traceback.format_exc()}'
-                )
-                if attempt < 3:
-                    import time
-                    time.sleep(2)
-        _logger.critical('Vector store initialization failed after all attempts, RAG will be unavailable')
-
-
-def build_rag_context(user_message):
-    """将用户问题向量化，在 Chroma 中检索 Top-3 最相关片段"""
-    _ensure_vector_store()
-
-    if not AI_API_KEY:
+    if not scored:
         return ''
 
-    collection = _get_collection()
-    try:
-        existing = collection.get()
-        if not existing.get('ids'):
-            return ''
-    except Exception:
-        return ''
-
-    query_embedding = _get_embedding(user_message)
-
-    try:
-        results = collection.query(
-            query_embeddings=[query_embedding],
-            n_results=3,
-            include=['documents', 'metadatas', 'distances'],
-        )
-    except Exception:
-        _logger.error(f'Chroma query failed: {traceback.format_exc()}')
-        return ''
-
-    if not results['ids'] or not results['ids'][0]:
-        return ''
+    # 按得分降序排列，取 Top-3
+    scored.sort(key=lambda x: x[0], reverse=True)
+    top_results = scored[:3]
 
     snippets = []
-    for i in range(len(results['ids'][0])):
-        title = results['metadatas'][0][i].get('title', '未知')
-        doc = results['documents'][0][i]
-        snippets.append(f'【{title}】\n{doc}')
+    for _, title, text in top_results:
+        # 截断过长内容（最多500字），避免 context 过大
+        display_text = text if len(text) <= 500 else text[:500] + '...'
+        snippets.append(f'【{title}】\n{display_text}')
 
     return '\n\n---\n\n'.join(snippets)
 

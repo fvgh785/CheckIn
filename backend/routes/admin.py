@@ -1143,12 +1143,7 @@ def handle_knowledge_bases_create():
             write_admin_log(g.admin['id'], 'create', 'knowledge_base', kb_id,
                             f'新增知识库: {title}')
 
-            # 重建向量索引
-            try:
-                from chat import rebuild_vector_store
-                rebuild_vector_store()
-            except Exception:
-                _logger.warning(f'rebuild_vector_store failed after create: {traceback.format_exc()}')
+            # 知识库已使用关键词匹配检索，无需重建索引
 
             return jsonify({'success': True, 'id': kb_id, 'title': title}), 201
         finally:
@@ -1199,12 +1194,7 @@ def handle_knowledge_bases_update(kb_id):
             write_admin_log(g.admin['id'], 'update', 'knowledge_base', kb_id,
                             f'更新知识库: {_sanitize_detail(data)}')
 
-            # 重建向量索引
-            try:
-                from chat import rebuild_vector_store
-                rebuild_vector_store()
-            except Exception:
-                _logger.warning(f'rebuild_vector_store failed after update: {traceback.format_exc()}')
+            # 知识库已使用关键词匹配检索，无需重建索引
 
             return jsonify({'success': True, 'message': '知识库条目已更新'})
         finally:
@@ -1233,12 +1223,7 @@ def handle_knowledge_bases_delete(kb_id):
             write_admin_log(g.admin['id'], 'delete', 'knowledge_base', kb_id,
                             f'删除知识库: {row["title"]}')
 
-            # 重建向量索引
-            try:
-                from chat import rebuild_vector_store
-                rebuild_vector_store()
-            except Exception:
-                _logger.warning(f'rebuild_vector_store failed after delete: {traceback.format_exc()}')
+            # 知识库已使用关键词匹配检索，无需重建索引
 
             return jsonify({'success': True, 'message': '知识库条目已删除'})
         finally:
@@ -1251,12 +1236,5 @@ def handle_knowledge_bases_delete(kb_id):
 @admin_bp.route('/knowledge-bases/rebuild-index', methods=['POST'])
 @admin_required
 def handle_knowledge_bases_rebuild_index():
-    """手动触发向量索引重建"""
-    try:
-        from chat import rebuild_vector_store
-        rebuild_vector_store()
-        write_admin_log(g.admin['id'], 'update', 'knowledge_base', None, '手动重建向量索引')
-        return jsonify({'success': True, 'message': '向量索引重建完成'})
-    except Exception:
-        _logger.error(f'rebuild_index failed: {traceback.format_exc()}')
-        return jsonify({'error': '向量索引重建失败'}), 500
+    """手动触发索引重建（已切换为关键词匹配检索，无需重建）"""
+    return jsonify({'success': True, 'message': '当前使用关键词匹配检索，无需重建索引'})
