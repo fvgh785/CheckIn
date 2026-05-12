@@ -975,10 +975,14 @@ def handle_get_config():
         makeup_limit = int(config.get('makeup_card_limit', '3'))
         cutoff_date = config.get('free_membership_cutoff_date', '')
         insight_limit = int(config.get('insight_generation_limit', '3'))
+        chat_enabled = config.get('chat_enabled', '1')
+        chat_token_limit = int(config.get('chat_token_limit_per_day', '5000'))
         return jsonify({
             'makeup_card_limit': makeup_limit,
             'free_membership_cutoff_date': cutoff_date,
             'insight_generation_limit': insight_limit,
+            'chat_enabled': chat_enabled,
+            'chat_token_limit_per_day': chat_token_limit,
             'membership_level': 'premium',
             'app_version': '1.0.0',
             'environment': {
@@ -1022,6 +1026,18 @@ def handle_update_config():
             set_system_config('insight_generation_limit', insight_limit)
             updated_keys.append('insight_generation_limit')
 
+        if 'chat_enabled' in data:
+            chat_enabled = data['chat_enabled']
+            set_system_config('chat_enabled', '1' if chat_enabled else '0')
+            updated_keys.append('chat_enabled')
+
+        if 'chat_token_limit_per_day' in data:
+            chat_limit = int(data['chat_token_limit_per_day'])
+            if chat_limit < 0 or chat_limit > 100000:
+                return jsonify({'error': '每日Token上限需在0-100000之间'}), 400
+            set_system_config('chat_token_limit_per_day', chat_limit)
+            updated_keys.append('chat_token_limit_per_day')
+
         if not updated_keys:
             return jsonify({'success': False, 'message': '无有效配置项'}), 400
 
@@ -1031,3 +1047,207 @@ def handle_update_config():
     except Exception:
         _logger.error(f'update_config failed: {traceback.format_exc()}')
         return jsonify({'error': '服务器内部错误'}), 500
+
+
+# ======================== 知识库管理 ========================
+
+@admin_bp.route('/knowledge-bases', methods=['GET'])
+@admin_required
+def handle_knowledge_bases_list():
+    """获取所有知识库列表（含禁用的）"""
+    try:
+        page = request.args.get('page', 1, type=int)
+        page_size = request.args.get('page_size', 20, type=int)
+        category = request.args.get('category', '').strip()
+
+        conn = get_connection()
+        try:
+            offset = (page - 1) * page_size
+            conditions = []
+            params = []
+            if category:
+                conditions.append('category = %s')
+                params.append(category)
+
+            where_clause = ' AND '.join(conditions) if conditions else '1=1'
+
+            with conn.cursor() as cur:
+                cur.execute(
+                    f'SELECT COUNT(*) as total FROM knowledge_bases WHERE {where_clause}',
+                    params
+                )
+                total = cur.fetchone()['total']
+
+                cur.execute(
+                    f'''SELECT id, title, category, enabled, created_at, updated_at,
+                               LEFT(content, 100) as content_preview
+                        FROM knowledge_bases
+                        WHERE {where_clause}
+                        ORDER BY category, created_at ASC
+                        LIMIT %s OFFSET %s''',
+                    params + [page_size, offset]
+                )
+                rows = cur.fetchall()
+                items = [{
+                    'id': r['id'],
+                    'title': r['title'],
+                    'content_preview': r['content_preview'],
+                    'category': r['category'],
+                    'enabled': r['enabled'],
+                    'created_at': str(r['created_at']),
+                    'updated_at': str(r['updated_at']) if r['updated_at'] else None,
+                } for r in rows]
+                return jsonify({'knowledge_bases': items, 'total': total, 'page': page, 'page_size': page_size})
+        finally:
+            conn.close()
+    except Exception:
+        _logger.error(f'knowledge_bases list failed: {traceback.format_exc()}')
+        return jsonify({'error': '服务器内部错误'}), 500
+
+
+@admin_bp.route('/knowledge-bases', methods=['POST'])
+@admin_required
+def handle_knowledge_bases_create():
+    """新增知识库条目"""
+    data = request.get_json(silent=True) or {}
+    title = data.get('title', '').strip()
+    content = data.get('content', '').strip()
+    category = data.get('category', 'general').strip()
+    enabled = data.get('enabled', 1)
+
+    if not title or not content:
+        return jsonify({'error': '标题和内容不能为空'}), 400
+    if len(title) > 200:
+        return jsonify({'error': '标题不超过200字'}), 400
+
+    try:
+        conn = get_connection()
+        try:
+            kb_id = str(uuid.uuid4())
+            with conn.cursor() as cur:
+                cur.execute(
+                    'INSERT INTO knowledge_bases (id, title, content, category, enabled) VALUES (%s, %s, %s, %s, %s)',
+                    (kb_id, title, content, category, 1 if enabled else 0)
+                )
+                conn.commit()
+
+            write_admin_log(g.admin['id'], 'create', 'knowledge_base', kb_id,
+                            f'新增知识库: {title}')
+
+            # 重建向量索引
+            try:
+                from chat import rebuild_vector_store
+                rebuild_vector_store()
+            except Exception:
+                _logger.warning(f'rebuild_vector_store failed after create: {traceback.format_exc()}')
+
+            return jsonify({'success': True, 'id': kb_id, 'title': title}), 201
+        finally:
+            conn.close()
+    except Exception:
+        _logger.error(f'knowledge_bases create failed: {traceback.format_exc()}')
+        return jsonify({'error': '服务器内部错误'}), 500
+
+
+@admin_bp.route('/knowledge-bases/<kb_id>', methods=['PUT'])
+@admin_required
+def handle_knowledge_bases_update(kb_id):
+    """编辑知识库条目"""
+    data = request.get_json(silent=True) or {}
+
+    try:
+        conn = get_connection()
+        try:
+            updates = []
+            params = []
+
+            if 'title' in data:
+                updates.append('title = %s')
+                params.append(data['title'].strip())
+            if 'content' in data:
+                updates.append('content = %s')
+                params.append(data['content'].strip())
+            if 'category' in data:
+                updates.append('category = %s')
+                params.append(data['category'].strip())
+            if 'enabled' in data:
+                updates.append('enabled = %s')
+                params.append(1 if data['enabled'] else 0)
+
+            if not updates:
+                return jsonify({'error': '无更新内容'}), 400
+
+            params.append(kb_id)
+            set_clause = ', '.join(updates)
+            sql = f'UPDATE knowledge_bases SET {set_clause} WHERE id = %s'
+
+            with conn.cursor() as cur:
+                cur.execute(sql, params)
+                if cur.rowcount == 0:
+                    return jsonify({'error': '知识库条目不存在'}), 404
+                conn.commit()
+
+            write_admin_log(g.admin['id'], 'update', 'knowledge_base', kb_id,
+                            f'更新知识库: {_sanitize_detail(data)}')
+
+            # 重建向量索引
+            try:
+                from chat import rebuild_vector_store
+                rebuild_vector_store()
+            except Exception:
+                _logger.warning(f'rebuild_vector_store failed after update: {traceback.format_exc()}')
+
+            return jsonify({'success': True, 'message': '知识库条目已更新'})
+        finally:
+            conn.close()
+    except Exception:
+        _logger.error(f'knowledge_bases update failed: {traceback.format_exc()}')
+        return jsonify({'error': '服务器内部错误'}), 500
+
+
+@admin_bp.route('/knowledge-bases/<kb_id>', methods=['DELETE'])
+@admin_required
+def handle_knowledge_bases_delete(kb_id):
+    """删除知识库条目"""
+    try:
+        conn = get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute('SELECT title FROM knowledge_bases WHERE id = %s', (kb_id,))
+                row = cur.fetchone()
+                if not row:
+                    return jsonify({'error': '知识库条目不存在'}), 404
+
+                cur.execute('DELETE FROM knowledge_bases WHERE id = %s', (kb_id,))
+                conn.commit()
+
+            write_admin_log(g.admin['id'], 'delete', 'knowledge_base', kb_id,
+                            f'删除知识库: {row["title"]}')
+
+            # 重建向量索引
+            try:
+                from chat import rebuild_vector_store
+                rebuild_vector_store()
+            except Exception:
+                _logger.warning(f'rebuild_vector_store failed after delete: {traceback.format_exc()}')
+
+            return jsonify({'success': True, 'message': '知识库条目已删除'})
+        finally:
+            conn.close()
+    except Exception:
+        _logger.error(f'knowledge_bases delete failed: {traceback.format_exc()}')
+        return jsonify({'error': '服务器内部错误'}), 500
+
+
+@admin_bp.route('/knowledge-bases/rebuild-index', methods=['POST'])
+@admin_required
+def handle_knowledge_bases_rebuild_index():
+    """手动触发向量索引重建"""
+    try:
+        from chat import rebuild_vector_store
+        rebuild_vector_store()
+        write_admin_log(g.admin['id'], 'update', 'knowledge_base', None, '手动重建向量索引')
+        return jsonify({'success': True, 'message': '向量索引重建完成'})
+    except Exception:
+        _logger.error(f'rebuild_index failed: {traceback.format_exc()}')
+        return jsonify({'error': '向量索引重建失败'}), 500

@@ -19,6 +19,7 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   KeyOutlined,
+  BookOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { adminLogout, changePassword } from '../services/admin';
@@ -44,6 +45,7 @@ const menuItems: MenuProps['items'] = [
       { key: '/admins', icon: <SafetyOutlined />, label: '管理员' },
       { key: '/logs', icon: <FileTextOutlined />, label: '操作日志' },
       { key: '/config', icon: <SettingOutlined />, label: '系统配置' },
+      { key: '/knowledge', icon: <BookOutlined />, label: '知识库管理' },
     ],
   },
 ];
@@ -131,7 +133,7 @@ export default function MainLayout() {
 
   const getOpenKeys = () => {
     const path = location.pathname;
-    if (['/admins', '/logs', '/config'].some(k => path.startsWith(k))) return ['system'];
+    if (['/admins', '/logs', '/config', '/knowledge'].some(k => path.startsWith(k))) return ['system'];
     return [];
   };
 

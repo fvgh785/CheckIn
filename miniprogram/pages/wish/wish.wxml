@@ -61,4 +61,5 @@
   </block>
 
   <view wx:if="{{loading}}" class="loading"><text>加载中...</text></view>
+  <chat-fab visible="{{isLoggedIn}}" />
 </view>

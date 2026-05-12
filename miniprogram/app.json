@@ -6,7 +6,8 @@
     "pages/insight/insight",
     "pages/wish/wish",
     "pages/profile/profile",
-    "pages/capsule/capsule"
+    "pages/capsule/capsule",
+    "pages/chat/chat"
   ],
   "window": {
     "navigationBarTitleText": "每日打卡",

@@ -14,6 +14,7 @@ COPY db_membership.py ./
 COPY db_admin.py ./
 COPY limiter.py ./
 COPY ai_insight.py ./
+COPY chat.py ./
 COPY scheduler.py ./
 COPY middleware/ ./middleware/
 COPY routes/ ./routes/

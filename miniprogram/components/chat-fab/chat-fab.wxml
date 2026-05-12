@@ -1,0 +1,3 @@
+<view wx:if="{{visible}}" class="fab" bindtap="handleTap">
+  <text class="fab-icon">💬</text>
+</view>

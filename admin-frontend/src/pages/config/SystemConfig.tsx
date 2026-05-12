@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Card, Descriptions, Typography, InputNumber, DatePicker, Button, message, Spin } from 'antd';
+import { Card, Descriptions, Typography, InputNumber, DatePicker, Button, message, Spin, Switch } from 'antd';
 import dayjs from 'dayjs';
 import { getConfig, updateConfig } from '../../services/admin';
 
 const { Title } = Typography;
 
-interface Config { makeup_card_limit: number; free_membership_cutoff_date: string; insight_generation_limit: number; membership_level: string; app_version: string; }
+interface Config { makeup_card_limit: number; free_membership_cutoff_date: string; insight_generation_limit: number; chat_enabled: string; chat_token_limit_per_day: number; membership_level: string; app_version: string; }
 
 export default function SystemConfig() {
   const [config, setConfig] = useState<Config | null>(null);
@@ -13,6 +13,8 @@ export default function SystemConfig() {
   const [makeupLimit, setMakeupLimit] = useState(3);
   const [cutoffDate, setCutoffDate] = useState<string>('');
   const [insightLimit, setInsightLimit] = useState(3);
+  const [chatEnabled, setChatEnabled] = useState(true);
+  const [chatTokenLimit, setChatTokenLimit] = useState(5000);
 
   useEffect(() => { loadConfig(); }, []);
 
@@ -23,13 +25,15 @@ export default function SystemConfig() {
       setMakeupLimit(res.data.makeup_card_limit);
       setCutoffDate(res.data.free_membership_cutoff_date || '');
       setInsightLimit(res.data.insight_generation_limit ?? 3);
+      setChatEnabled(res.data.chat_enabled !== '0');
+      setChatTokenLimit(res.data.chat_token_limit_per_day ?? 5000);
     }
     catch { /* handled */ } finally { setLoading(false); }
   };
 
   const handleSave = async () => {
     try {
-      await updateConfig({ makeup_card_limit: makeupLimit, free_membership_cutoff_date: cutoffDate, insight_generation_limit: insightLimit });
+      await updateConfig({ makeup_card_limit: makeupLimit, free_membership_cutoff_date: cutoffDate, insight_generation_limit: insightLimit, chat_enabled: chatEnabled, chat_token_limit_per_day: chatTokenLimit });
       message.success('配置已保存');
     }
     catch { /* handled */ }
@@ -63,6 +67,14 @@ export default function SystemConfig() {
         <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 16 }}>
           <span>AI洞察每日手动生成上限:</span>
           <InputNumber min={0} max={20} value={insightLimit} onChange={(v) => setInsightLimit(v || 0)} />
+        </div>
+        <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 16 }}>
+          <span>AI智能助手全局开关:</span>
+          <Switch checked={chatEnabled} onChange={(v) => setChatEnabled(v)} />
+        </div>
+        <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 16 }}>
+          <span>AI助手每日Token上限:</span>
+          <InputNumber min={0} max={100000} value={chatTokenLimit} onChange={(v) => setChatTokenLimit(v || 0)} />
         </div>
         <Button type="primary" onClick={handleSave}>保存配置</Button>
       </Card>

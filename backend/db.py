@@ -218,6 +218,28 @@ def init_db():
                 )
             ''')
             cur.execute('''
+                CREATE TABLE IF NOT EXISTS chat_history (
+                    id VARCHAR(36) PRIMARY KEY,
+                    user_id VARCHAR(36) NOT NULL,
+                    role VARCHAR(16) NOT NULL,
+                    content TEXT NOT NULL,
+                    token_used INT DEFAULT 0,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users(id)
+                )
+            ''')
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS knowledge_bases (
+                    id VARCHAR(36) PRIMARY KEY,
+                    title VARCHAR(200) NOT NULL,
+                    content TEXT NOT NULL,
+                    category VARCHAR(50) NOT NULL DEFAULT 'general',
+                    enabled TINYINT DEFAULT 1,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                )
+            ''')
+            cur.execute('''
                 CREATE TABLE IF NOT EXISTS admins (
                     id VARCHAR(36) PRIMARY KEY,
                     username VARCHAR(50) NOT NULL UNIQUE,
@@ -275,6 +297,57 @@ def init_db():
                     'INSERT INTO system_config (config_key, config_value) VALUES (%s, %s)',
                     ('insight_generation_limit', '3')
                 )
+                cur.execute(
+                    'INSERT INTO system_config (config_key, config_value) VALUES (%s, %s)',
+                    ('chat_enabled', '1')
+                )
+                cur.execute(
+                    'INSERT INTO system_config (config_key, config_value) VALUES (%s, %s)',
+                    ('chat_token_limit_per_day', '5000')
+                )
+            # 兼容旧表：若 chat_enabled 配置不存在则补插
+            try:
+                cur.execute('SELECT config_value FROM system_config WHERE config_key = %s', ('chat_enabled',))
+                if not cur.fetchone():
+                    cur.execute(
+                        'INSERT INTO system_config (config_key, config_value) VALUES (%s, %s)',
+                        ('chat_enabled', '1')
+                    )
+            except Exception:
+                pass
+            try:
+                cur.execute('SELECT config_value FROM system_config WHERE config_key = %s', ('chat_token_limit_per_day',))
+                if not cur.fetchone():
+                    cur.execute(
+                        'INSERT INTO system_config (config_key, config_value) VALUES (%s, %s)',
+                        ('chat_token_limit_per_day', '5000')
+                    )
+            except Exception:
+                pass
+            # 初始化默认知识库数据
+            try:
+                cur.execute('SELECT COUNT(*) as cnt FROM knowledge_bases')
+                if cur.fetchone()['cnt'] == 0:
+                    kb_id = str(uuid.uuid4())
+                    feature_intro = (
+                        '欢迎使用「每日打卡」小程序！以下是我们的全部功能：\n\n'
+                        '1. 每日打卡：点击首页打卡按钮完成今日打卡，系统会记录连续天数、最高记录和累计天数。未登录用户数据面板会模糊展示。\n\n'
+                        '2. 宠物养成（会员专属）：开通会员后可在首页领养虚拟宠物，选宠类型包括猫、狗、兔子、熊猫。宠物有4个成长阶段（蛋→幼崽→成年→传说），需要每天打卡喂食来维持心情和饱腹值。连续断签会导致宠物生病，需连续打卡3天恢复。\n\n'
+                        '3. 补签卡（会员专属）：每月赠送定额补签卡（默认3张，管理员可调），可在首页选择漏打卡的日期进行补签。额度每月1日自动重置。\n\n'
+                        '4. 打卡小队：创建或加入小队（通过6位邀请码），与好友互相监督打卡。小队页面可查看成员今日打卡状态、连续全勤天数和最高记录。创建小队需要会员，加入小队不需要。小队上限5人。\n\n'
+                        '5. AI智能周报（会员专属）：AI教练分析你一周的打卡习惯并给出鼓励和建议。每周自动生成一次，也可手动触发重新生成（每日有次数限制，默认3次）。历史周报可回溯查看。\n\n'
+                        '6. 心愿清单（会员专属）：设定个人奖励目标（如"坚持30天奖励自己一顿大餐"），设置目标天数（7-365天）。打卡会自动推进心愿进度，达成时庆祝提示。\n\n'
+                        '7. 时光胶囊（会员专属）：给未来的自己写一封信，设定需要连续打卡多少天后才能开启（7-365天）。未开启的胶囊内容保密，达成条件后开启弹窗展示。\n\n'
+                        '8. 会员体系：目前仅提供高级会员等级。会员可享宠物养成、补签卡、打卡小队创建、AI周报、心愿清单、时光胶囊等全部特权。管理员可在后台为用户开通会员。\n\n'
+                        '9. 个人中心：编辑昵称、绑定/换绑邮箱。查看会员状态、有效期。管理宠物（改名）、查看补签卡额度。\n\n'
+                        '如有其他问题，欢迎随时向我提问！'
+                    )
+                    cur.execute(
+                        'INSERT INTO knowledge_bases (id, title, content, category, enabled) VALUES (%s, %s, %s, %s, 1)',
+                        (kb_id, '小程序功能介绍', feature_intro, 'feature')
+                    )
+            except Exception:
+                pass
             # 初始化默认超级管理员（必须通过环境变量设置凭据）
             try:
                 from werkzeug.security import generate_password_hash

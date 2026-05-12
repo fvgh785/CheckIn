@@ -1,0 +1,103 @@
+<view class="container">
+  <!-- 未登录 -->
+  <view wx:if="{{!isLoggedIn}}" class="login-guide">
+    <text class="login-emoji">🤖</text>
+    <text class="login-title">AI智能助手</text>
+    <text class="login-desc">登录后即可与AI助手对话，解答打卡相关问题</text>
+    <button class="login-btn" bindtap="goLogin">去登录</button>
+  </view>
+
+  <!-- 已登录 -->
+  <block wx:else>
+    <!-- 知识库区域 -->
+    <view wx:if="{{knowledgeBases.length > 0}}" class="kb-section">
+      <view class="kb-header" bindtap="toggleKnowledge">
+        <text class="kb-title">📚 知识库</text>
+        <text class="kb-toggle">{{showKnowledge ? '收起 ▲' : '展开 ▼'}}</text>
+      </view>
+      <view wx:if="{{showKnowledge}}" class="kb-list">
+        <view
+          wx:for="{{knowledgeBases}}"
+          wx:key="id"
+          class="kb-item"
+          data-id="{{item.id}}"
+          bindtap="handleShowKB"
+        >
+          <text class="kb-item-title">{{item.title}}</text>
+          <text class="kb-item-summary">{{item.summary}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 配额提示 -->
+    <view class="quota-bar">
+      <text class="quota-text">今日额度：{{quota.used}} / {{quota.limit}} token</text>
+    </view>
+
+    <!-- 消息列表 -->
+    <scroll-view
+      class="msg-list"
+      scroll-y
+      scroll-into-view="{{scrollToView}}"
+      scroll-with-animation
+    >
+      <!-- 空状态 -->
+      <view wx:if="{{messages.length === 0}}" class="empty-state">
+        <text class="empty-emoji">💬</text>
+        <text class="empty-title">有什么可以帮你的？</text>
+        <text class="empty-desc">试着问我关于打卡、宠物、小队等问题吧</text>
+      </view>
+
+      <!-- 快捷问题 -->
+      <view wx:if="{{messages.length === 0}}" class="quick-asks">
+        <view class="quick-item" data-question="小程序有哪些功能？" bindtap="handleQuickAsk">
+          <text>小程序有哪些功能？</text>
+        </view>
+        <view class="quick-item" data-question="如何创建打卡小队？" bindtap="handleQuickAsk">
+          <text>如何创建打卡小队？</text>
+        </view>
+        <view class="quick-item" data-question="宠物怎么升级？" bindtap="handleQuickAsk">
+          <text>宠物怎么升级？</text>
+        </view>
+      </view>
+
+      <!-- 消息气泡 -->
+      <view
+        wx:for="{{messages}}"
+        wx:key="id"
+        class="msg-row {{item.role === 'user' ? 'msg-right' : 'msg-left'}}"
+      >
+        <view class="msg-avatar">
+          <text>{{item.role === 'user' ? '👤' : '🤖'}}</text>
+        </view>
+        <view class="msg-bubble {{item.role === 'user' ? 'bubble-user' : 'bubble-ai'}}">
+          <text>{{item.content}}</text>
+        </view>
+      </view>
+
+      <!-- 加载历史 -->
+      <view wx:if="{{hasMore && messages.length > 0}}" class="load-more">
+        <text>上拉加载更多</text>
+      </view>
+
+      <view id="msg-bottom"></view>
+    </scroll-view>
+
+    <!-- 输入区 -->
+    <view class="input-bar">
+      <input
+        class="input-field"
+        value="{{inputValue}}"
+        placeholder="输入你的问题..."
+        bindinput="onInput"
+        confirm-type="send"
+        bindconfirm="handleSend"
+        maxlength="500"
+        disabled="{{sending}}"
+      />
+      <button class="send-btn {{sending ? 'disabled' : ''}}" bindtap="handleSend" disabled="{{sending}}">
+        <text>{{sending ? '...' : '发送'}}</text>
+      </button>
+    </view>
+  </block>
+</view>

@@ -18,6 +18,7 @@ import InsightList from './pages/insights/InsightList';
 import AdminList from './pages/admins/AdminList';
 import LogList from './pages/logs/LogList';
 import SystemConfig from './pages/config/SystemConfig';
+import KnowledgeList from './pages/knowledge/KnowledgeList';
 
 export default function App() {
   return (
@@ -47,6 +48,7 @@ export default function App() {
           <Route path="admins" element={<AdminList />} />
           <Route path="logs" element={<LogList />} />
           <Route path="config" element={<SystemConfig />} />
+          <Route path="knowledge" element={<KnowledgeList />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

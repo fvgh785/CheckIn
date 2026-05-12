@@ -111,3 +111,19 @@ export const getLogList = (params: {
 export const getConfig = () => api.get('/config');
 
 export const updateConfig = (data: Record<string, unknown>) => api.put('/config', data);
+
+// ======================== 知识库管理 ========================
+export const getKnowledgeBases = (params: { page?: number; page_size?: number; category?: string }) =>
+  api.get('/knowledge-bases', { params });
+
+export const createKnowledgeBase = (data: { title: string; content: string; category: string; enabled: boolean }) =>
+  api.post('/knowledge-bases', data);
+
+export const updateKnowledgeBase = (id: string, data: Record<string, unknown>) =>
+  api.put(`/knowledge-bases/${id}`, data);
+
+export const deleteKnowledgeBase = (id: string) =>
+  api.delete(`/knowledge-bases/${id}`);
+
+export const rebuildKnowledgeIndex = () =>
+  api.post('/knowledge-bases/rebuild-index');

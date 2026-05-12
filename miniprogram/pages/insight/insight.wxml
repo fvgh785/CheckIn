@@ -51,4 +51,5 @@
     <text>加载中...</text>
   </view>
   </block>
+  <chat-fab visible="{{isLoggedIn}}" />
 </view>
