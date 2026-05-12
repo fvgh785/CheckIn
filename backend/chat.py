@@ -25,6 +25,7 @@ COLLECTION_NAME = 'knowledge_bases'
 
 _chroma_client = None
 _collection = None
+_vector_store_initialized = False
 _lock = threading.Lock()
 
 # ======================== 向量存储初始化 ========================
@@ -138,17 +139,45 @@ def init_vector_store():
 
 def rebuild_vector_store():
     """公开接口，admin 修改知识库后调用重建（线程安全）"""
-    global _collection
+    global _collection, _vector_store_initialized
     with _lock:
         _collection = None  # 重置，下次 _get_collection 会重新获取
         init_vector_store()
+        _vector_store_initialized = True
 
 
 # ======================== RAG 检索 ========================
 
 
+def _ensure_vector_store():
+    """惰性初始化向量存储（首次 RAG 调用时触发，避免阻塞 worker 启动）"""
+    global _vector_store_initialized
+    if _vector_store_initialized:
+        return
+    with _lock:
+        if _vector_store_initialized:
+            return
+        # 带重试的初始化
+        for attempt in range(1, 4):
+            try:
+                init_vector_store()
+                _vector_store_initialized = True
+                _logger.info('Vector store lazily initialized')
+                return
+            except Exception:
+                _logger.error(
+                    f'init_vector_store attempt {attempt}/3 failed: {traceback.format_exc()}'
+                )
+                if attempt < 3:
+                    import time
+                    time.sleep(2)
+        _logger.critical('Vector store initialization failed after all attempts, RAG will be unavailable')
+
+
 def build_rag_context(user_message):
     """将用户问题向量化，在 Chroma 中检索 Top-3 最相关片段"""
+    _ensure_vector_store()
+
     if not AI_API_KEY:
         return ''
 

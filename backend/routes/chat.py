@@ -1,5 +1,4 @@
 import logging
-import time
 import traceback
 from flask import Blueprint, request, jsonify, g
 from middleware.auth import auth_required
@@ -11,21 +10,6 @@ from chat import (
 
 chat_bp = Blueprint('chat', __name__)
 _logger = logging.getLogger(__name__)
-
-# 启动时初始化向量存储（带重试）
-def _init_vector_store_with_retry(max_attempts=3, delay=2):
-    for attempt in range(1, max_attempts + 1):
-        try:
-            init_vector_store()
-            _logger.info('Vector store initialized successfully')
-            return
-        except Exception:
-            _logger.error(f'init_vector_store attempt {attempt}/{max_attempts} failed: {traceback.format_exc()}')
-            if attempt < max_attempts:
-                time.sleep(delay)
-    _logger.critical('Vector store initialization failed after all attempts')
-
-_init_vector_store_with_retry()
 
 
 # ======================== 对话接口 ========================
