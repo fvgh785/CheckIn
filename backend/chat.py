@@ -16,6 +16,26 @@ AI_API_KEY = os.environ.get('AI_API_KEY', '')
 AI_API_URL = os.environ.get('AI_API_URL', 'https://api.deepseek.com/v1/chat/completions')
 AI_MODEL = os.environ.get('AI_MODEL', 'deepseek-chat')
 
+# ======================== 关键词提取（公共） ========================
+
+# 停用词表：分词时过滤掉无实义的常见词
+STOP_WORDS = {
+    '的', '了', '在', '是', '我', '有', '和', '就', '不', '人', '都', '一',
+    '一个', '上', '也', '很', '到', '说', '要', '去', '你', '会', '着', '没有',
+    '看', '好', '自己', '这', '他', '她', '它', '们', '那', '什么', '怎么',
+    '如何', '为什么', '哪', '吗', '吧', '呢', '啊', '哦', '嗯', '可以', '能',
+    '请问', '一下', '现在', '已经', '还是', '这个', '那个', '哪些', '这些',
+    '如果', '需要', '应该', '是否', '知道', '告诉', '帮忙', '帮我',
+}
+
+
+def _extract_keywords(text):
+    """使用 jieba 中文分词提取关键词，过滤单字和停用词"""
+    if not text or not text.strip():
+        return []
+    return [w for w in jieba.cut(text.strip()) if len(w) > 1 and w.strip() and w not in STOP_WORDS]
+
+
 # ======================== 知识库关键词检索 ========================
 
 
@@ -29,12 +49,7 @@ def build_rag_context(user_message):
     if not user_message or not AI_API_KEY:
         return ''
 
-    # jieba 中文分词提取关键词（过滤单字和停用词）
-    stop_words = {'的', '了', '在', '是', '我', '有', '和', '就', '不', '人', '都', '一',
-                  '一个', '上', '也', '很', '到', '说', '要', '去', '你', '会', '着', '没有',
-                  '看', '好', '自己', '这', '他', '她', '它', '们', '那', '什么', '怎么',
-                  '如何', '为什么', '哪', '吗', '吧', '呢', '啊', '哦', '嗯'}
-    keywords = [w for w in jieba.cut(user_message) if len(w) > 1 and w not in stop_words]
+    keywords = _extract_keywords(user_message)
 
     # 查询所有已启用的知识库条目
     init_db()
@@ -112,6 +127,72 @@ def build_rag_context(user_message):
     return '\n\n---\n\n'.join(snippets)
 
 
+# ======================== 智能话题切换检测 ========================
+
+# 话题重叠度阈值：当前消息关键词与历史关键词的交集占比低于此值时，判定为新话题
+TOPIC_OVERLAP_THRESHOLD = 0.25
+
+
+def _detect_topic_switch(current_message, history_messages):
+    """
+    检测当前消息是否属于新话题，避免跨话题上下文污染。
+
+    策略：提取当前消息关键词，与历史中所有 user 消息的关键词比较，
+    若交集占当前关键词的比例低于阈值，则判定为新话题（应重置上下文）。
+
+    Args:
+        current_message: 当前用户消息文本
+        history_messages: 历史消息列表 [{'role':..., 'content':...}, ...]
+
+    Returns:
+        True  — 话题已切换，建议只发送当前消息
+        False — 话题延续，可保留历史上下文
+    """
+    if not history_messages:
+        return False
+
+    current_keywords = set(_extract_keywords(current_message))
+
+    # 收集历史中最近 N 条 user 消息的关键词（窗口限制，防止长期对话关键词膨胀）
+    history_keywords = set()
+    user_msg_count = 0
+    MAX_USER_MSGS = 6  # 与上下文窗口 messages[-6:] 保持一致
+    for msg in reversed(history_messages):
+        if msg.get('role') == 'user':
+            history_keywords.update(_extract_keywords(msg.get('content', '')))
+            user_msg_count += 1
+            if user_msg_count >= MAX_USER_MSGS:
+                break
+
+    # 当前消息无法提取关键词（如"你是谁"、"好的"、纯语气词等）
+    if not current_keywords:
+        # 极短消息（≤4字）几乎总是对上一轮的回应/追问，保留上下文
+        if len(current_message.strip()) <= 4:
+            _logger.info(
+                '_detect_topic_switch: short msg with no keywords "%s", keeping context',
+                current_message[:30]
+            )
+            return False
+        # 较长但无关键词的消息（罕见），历史有关键词则判定为话题切换
+        return bool(history_keywords)
+
+    if not history_keywords:
+        return False
+
+    overlap = current_keywords & history_keywords
+    overlap_ratio = len(overlap) / len(current_keywords)
+
+    _logger.info(
+        '_detect_topic_switch: current="%s" cur_kw=%s hist_kw=%s '
+        'overlap=%s ratio=%.2f thresh=%.2f switch=%s',
+        current_message[:30], current_keywords, history_keywords,
+        overlap, overlap_ratio, TOPIC_OVERLAP_THRESHOLD,
+        overlap_ratio < TOPIC_OVERLAP_THRESHOLD
+    )
+
+    return overlap_ratio < TOPIC_OVERLAP_THRESHOLD
+
+
 SYSTEM_PROMPT_TEMPLATE = (
     '你是每日打卡小程序的智能助手。请根据以下参考资料回答用户问题，语气温暖亲切。\n\n'
     '参考资料：\n{rag_context}\n\n'
@@ -156,11 +237,33 @@ def chat_with_ai(user_id, messages):
     # 构建 system prompt
     system_content = SYSTEM_PROMPT_TEMPLATE.format(rag_context=rag_context or '(暂无参考资料)')
 
-    # 构建消息列表（限制最近10轮对话以控制token消耗）
+    # === 智能上下文窗口：检测话题是否切换 ===
     msgs_for_api = [{'role': 'system', 'content': system_content}]
-    recent_history = messages[-20:]  # 最多10轮（20条）
-    for m in recent_history:
-        msgs_for_api.append({'role': m['role'], 'content': m['content']})
+
+    # 分离当前消息和历史消息
+    if len(messages) > 1:
+        history = messages[:-1]  # 历史消息（不含当前用户消息）
+        current_msg = messages[-1]
+    else:
+        history = []
+        current_msg = messages[0] if messages else {'role': 'user', 'content': ''}
+
+    # 检测话题是否切换
+    topic_switched = _detect_topic_switch(
+        current_msg.get('content', ''),
+        history
+    )
+
+    if topic_switched:
+        # 新话题：只发送当前消息，不带历史上下文，避免污染
+        msgs_for_api.append(current_msg)
+        _logger.info('chat_with_ai: topic switched, sending only current message: "%s"',
+                     user_message[:30])
+    else:
+        # 同话题延续：保留最近6条（3轮）上下文
+        recent_history = messages[-6:]
+        for m in recent_history:
+            msgs_for_api.append({'role': m['role'], 'content': m['content']})
 
     try:
         headers = {
@@ -270,8 +373,12 @@ def save_chat_message(user_id, role, content, token_used=0):
         conn.close()
 
 
-def get_chat_history(user_id, page=1, page_size=20):
-    """分页获取历史对话"""
+def get_chat_history(user_id, page=1, page_size=20, newest_first=False):
+    """分页获取历史对话
+    
+    Args:
+        newest_first: True 返回最新消息在前（DESC），False 返回最早消息在前（ASC）
+    """
     init_db()
     conn = get_connection()
     try:
@@ -284,7 +391,9 @@ def get_chat_history(user_id, page=1, page_size=20):
             total = cur.fetchone()['total']
 
             cur.execute(
-                'SELECT id, role, content, token_used, created_at FROM chat_history WHERE user_id = %s ORDER BY created_at ASC LIMIT %s OFFSET %s',
+                'SELECT id, role, content, token_used, created_at FROM chat_history WHERE user_id = %s ORDER BY created_at {} LIMIT %s OFFSET %s'.format(
+                    'DESC' if newest_first else 'ASC'
+                ),
                 (user_id, page_size, offset)
             )
             rows = cur.fetchall()

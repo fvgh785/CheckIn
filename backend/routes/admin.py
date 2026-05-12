@@ -1153,6 +1153,37 @@ def handle_knowledge_bases_create():
         return jsonify({'error': '服务器内部错误'}), 500
 
 
+@admin_bp.route('/knowledge-bases/<kb_id>', methods=['GET'])
+@admin_required
+def handle_knowledge_bases_detail(kb_id):
+    """获取单条知识库完整内容（管理员用）"""
+    try:
+        conn = get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    'SELECT id, title, content, category, enabled, created_at, updated_at FROM knowledge_bases WHERE id = %s',
+                    (kb_id,)
+                )
+                row = cur.fetchone()
+                if not row:
+                    return jsonify({'error': '知识库条目不存在'}), 404
+                return jsonify({
+                    'id': row['id'],
+                    'title': row['title'],
+                    'content': row['content'],
+                    'category': row['category'],
+                    'enabled': row['enabled'],
+                    'created_at': str(row['created_at']),
+                    'updated_at': str(row['updated_at']) if row['updated_at'] else None,
+                })
+        finally:
+            conn.close()
+    except Exception:
+        _logger.error(f'knowledge_bases detail failed: {traceback.format_exc()}')
+        return jsonify({'error': '服务器内部错误'}), 500
+
+
 @admin_bp.route('/knowledge-bases/<kb_id>', methods=['PUT'])
 @admin_required
 def handle_knowledge_bases_update(kb_id):

@@ -71,7 +71,9 @@
           <text>{{item.role === 'user' ? '👤' : '🤖'}}</text>
         </view>
         <view class="msg-bubble {{item.role === 'user' ? 'bubble-user' : 'bubble-ai'}}">
-          <text>{{item.content}}</text>
+          <text wx:if="{{item.role === 'user'}}">{{item.content}}</text>
+          <rich-text wx:if="{{item.role === 'assistant' && item.contentNodes}}" nodes="{{item.contentNodes}}"></rich-text>
+          <text wx:if="{{item.role === 'assistant' && !item.contentNodes}}">{{item.content}}</text>
         </view>
       </view>
 

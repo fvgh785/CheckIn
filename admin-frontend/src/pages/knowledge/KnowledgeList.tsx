@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Table, Button, Modal, Form, Input, Select, Switch, Space, Tag, message, Popconfirm, Typography } from 'antd';
 import { PlusOutlined, ReloadOutlined } from '@ant-design/icons';
-import { getKnowledgeBases, createKnowledgeBase, updateKnowledgeBase, deleteKnowledgeBase, rebuildKnowledgeIndex } from '../../services/admin';
+import { getKnowledgeBases, getKnowledgeBaseDetail, createKnowledgeBase, updateKnowledgeBase, deleteKnowledgeBase, rebuildKnowledgeIndex } from '../../services/admin';
 
 const { Title } = Typography;
 const { TextArea } = Input;
@@ -33,6 +33,7 @@ export default function KnowledgeList() {
   const [editingItem, setEditingItem] = useState<KnowledgeBase | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [rebuilding, setRebuilding] = useState(false);
+  const [contentLoading, setContentLoading] = useState(false);
   const [form] = Form.useForm();
 
   const fetchData = async (p = page) => {
@@ -51,19 +52,36 @@ export default function KnowledgeList() {
 
   const handleCreate = () => {
     setEditingItem(null);
+    setContentLoading(false);
     form.resetFields();
     form.setFieldsValue({ category: 'general', enabled: true });
     setModalOpen(true);
   };
 
-  const handleEdit = (record: KnowledgeBase) => {
+  const handleEdit = async (record: KnowledgeBase) => {
     setEditingItem(record);
-    form.setFieldsValue({
-      title: record.title,
-      category: record.category,
-      enabled: record.enabled === 1,
-    });
+    setContentLoading(true);
+    // 先重置表单，避免残留数据
+    form.resetFields();
     setModalOpen(true);
+    try {
+      const detail = await getKnowledgeBaseDetail(record.id);
+      form.setFieldsValue({
+        title: detail.data.title,
+        content: detail.data.content,
+        category: detail.data.category,
+        enabled: detail.data.enabled === 1,
+      });
+    } catch {
+      // 获取失败时至少回填已有数据
+      form.setFieldsValue({
+        title: record.title,
+        category: record.category,
+        enabled: record.enabled === 1,
+      });
+    } finally {
+      setContentLoading(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -177,19 +195,12 @@ export default function KnowledgeList() {
           <Form.Item name="category" label="分类" rules={[{ required: true }]}>
             <Select options={CATEGORIES} />
           </Form.Item>
-          <Form.Item name="enabled" label="启用状态" valuePropName="checked">
+          <Form.Item name="enabled" label="启用状态（启用后用户可见）" valuePropName="checked">
             <Switch />
           </Form.Item>
-          {!editingItem && (
-            <Form.Item name="content" label="内容" rules={[{ required: true, message: '请输入内容' }]}>
-              <TextArea rows={15} maxLength={10000} placeholder="知识库正文内容" />
-            </Form.Item>
-          )}
-          {editingItem && (
-            <Form.Item name="content" label="内容">
-              <TextArea rows={15} maxLength={10000} placeholder="知识库正文内容" />
-            </Form.Item>
-          )}
+          <Form.Item name="content" label="内容" rules={editingItem ? [] : [{ required: true, message: '请输入内容' }]}>
+            <TextArea rows={15} maxLength={10000} placeholder={contentLoading ? '加载中...' : '知识库正文内容'} disabled={contentLoading} />
+          </Form.Item>
         </Form>
       </Modal>
     </div>

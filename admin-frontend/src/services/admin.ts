@@ -116,6 +116,9 @@ export const updateConfig = (data: Record<string, unknown>) => api.put('/config'
 export const getKnowledgeBases = (params: { page?: number; page_size?: number; category?: string }) =>
   api.get('/knowledge-bases', { params });
 
+export const getKnowledgeBaseDetail = (id: string) =>
+  api.get(`/knowledge-bases/${id}`);
+
 export const createKnowledgeBase = (data: { title: string; content: string; category: string; enabled: boolean }) =>
   api.post('/knowledge-bases', data);
 

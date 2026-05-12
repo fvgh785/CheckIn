@@ -1,5 +1,95 @@
 const app = getApp();
 
+/**
+ * 将 markdown 文本转换为 rich-text 组件可用的 nodes 数组
+ * 支持：标题(#)、加粗(**)、斜体(*)、行内代码(`)、链接、无序列表(-)、有序列表(1.)
+ */
+function parseInline(text) {
+  if (!text) return [{ type: 'text', text: '' }];
+  const children = [];
+  let remaining = text;
+  const regex = /(\*\*(.+?)\*\*)|(\*(.+?)\*)|(`(.+?)`)|(\[(.+?)\]\((.+?)\))/g;
+  let lastIndex = 0;
+  let match;
+  while ((match = regex.exec(remaining)) !== null) {
+    if (match.index > lastIndex) {
+      children.push({ type: 'text', text: remaining.slice(lastIndex, match.index) });
+    }
+    if (match[1]) {
+      children.push({ name: 'strong', children: [{ type: 'text', text: match[2] }] });
+    } else if (match[3]) {
+      children.push({ name: 'em', children: [{ type: 'text', text: match[4] }] });
+    } else if (match[5]) {
+      children.push({
+        name: 'code',
+        attrs: { style: 'background:#E8F7F6;padding:2rpx 8rpx;border-radius:4rpx;font-family:monospace;font-size:26rpx;' },
+        children: [{ type: 'text', text: match[6] }]
+      });
+    } else if (match[7]) {
+      children.push({
+        name: 'a',
+        attrs: { style: 'color:#5EBFB7;text-decoration:underline;' },
+        children: [{ type: 'text', text: match[8] }]
+      });
+    }
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < remaining.length) {
+    children.push({ type: 'text', text: remaining.slice(lastIndex) });
+  }
+  return children.length > 0 ? children : [{ type: 'text', text }];
+}
+
+function parseMarkdownToNodes(text) {
+  if (!text) return [{ type: 'text', text: '' }];
+  const lines = text.split('\n');
+  const nodes = [];
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    const headingMatch = line.match(/^(#{1,3})\s+(.+)/);
+    if (headingMatch) {
+      const level = headingMatch[1].length;
+      const sizes = { 1: '36rpx', 2: '32rpx', 3: '30rpx' };
+      nodes.push({
+        name: 'h' + level,
+        attrs: { style: 'font-size:' + (sizes[level] || '30rpx') + ';font-weight:bold;margin:16rpx 0 8rpx;' },
+        children: parseInline(headingMatch[2])
+      });
+      i++; continue;
+    }
+    if (line.trim() === '') { i++; continue; }
+    // 无序列表
+    if (/^[-*]\s+/.test(line)) {
+      const listItems = [];
+      while (i < lines.length && /^[-*]\s+/.test(lines[i])) {
+        listItems.push({ name: 'li', children: parseInline(lines[i].replace(/^[-*]\s+/, '')) });
+        i++;
+      }
+      nodes.push({ name: 'ul', attrs: { style: 'padding-left:36rpx;margin:8rpx 0;' }, children: listItems });
+      continue;
+    }
+    // 有序列表
+    if (/^\d+\.\s+/.test(line)) {
+      const listItems = [];
+      while (i < lines.length && /^\d+\.\s+/.test(lines[i])) {
+        listItems.push({ name: 'li', children: parseInline(lines[i].replace(/^\d+\.\s+/, '')) });
+        i++;
+      }
+      nodes.push({ name: 'ol', attrs: { style: 'padding-left:36rpx;margin:8rpx 0;' }, children: listItems });
+      continue;
+    }
+    // 普通段落
+    const paraLines = [];
+    while (i < lines.length && lines[i].trim() !== '' && !/^(#{1,3}\s+|[-*]\s+|\d+\.\s+)/.test(lines[i])) {
+      paraLines.push(lines[i]);
+      i++;
+    }
+    nodes.push({ name: 'p', attrs: { style: 'margin:4rpx 0;' }, children: parseInline(paraLines.join('\n')) });
+  }
+  return nodes.length > 0 ? nodes : [{ type: 'text', text }];
+}
+
 Page({
   data: {
     isLoggedIn: false,
@@ -72,7 +162,10 @@ Page({
     const page = append ? this.data.page + 1 : 1;
     try {
       const res = await app.request(`/chat/history?page=${page}&page_size=20`);
-      const newMsgs = res.messages || [];
+      const newMsgs = (res.messages || []).map(m => ({
+        ...m,
+        contentNodes: m.role === 'assistant' ? parseMarkdownToNodes(m.content) : undefined
+      }));
       let messages = append ? [...newMsgs, ...this.data.messages] : newMsgs;
       this.setData({
         messages,
@@ -128,12 +221,14 @@ Page({
           id: 'a-' + Date.now(),
           role: 'assistant',
           content: res.reply,
+          contentNodes: parseMarkdownToNodes(res.reply),
           created_at: ''
         });
         this.setData({
           messages: finalMessages,
           quota: res.quota || this.data.quota
         });
+        this.scrollToBottom();
       } else {
         wx.showToast({ title: res.message || '发送失败', icon: 'none' });
         // 移除临时消息

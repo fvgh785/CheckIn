@@ -44,10 +44,10 @@ def handle_chat_send():
     # 保存用户消息
     save_chat_message(user_id, 'user', user_message, 0)
 
-    # 获取最近对话历史
-    history = get_chat_history(user_id, page=1, page_size=20)
+    # 获取最近对话历史（desc取最新6条，再反转恢复升序，确保当前消息在末尾）
+    history = get_chat_history(user_id, page=1, page_size=6, newest_first=True)
     messages = []
-    for m in history['messages']:
+    for m in reversed(history['messages']):
         messages.append({'role': m['role'], 'content': m['content']})
 
     # 调用 AI
