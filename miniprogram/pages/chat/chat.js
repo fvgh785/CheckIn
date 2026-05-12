@@ -160,16 +160,21 @@ Page({
     this.handleSend();
   },
 
-  handleShowKB(e) {
+  async handleShowKB(e) {
     const id = e.currentTarget.dataset.id;
-    const kb = this.data.knowledgeBases.find(k => k.id === id);
-    if (kb) {
+    wx.showLoading({ title: '加载中...' });
+    try {
+      const kb = await app.request(`/chat/knowledge-bases/${id}`);
+      wx.hideLoading();
       wx.showModal({
         title: kb.title,
-        content: kb.summary,
+        content: kb.content,
         showCancel: false,
         confirmText: '知道了'
       });
+    } catch (err) {
+      wx.hideLoading();
+      wx.showToast({ title: '加载失败', icon: 'none' });
     }
   },
 

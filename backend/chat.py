@@ -247,8 +247,12 @@ def chat_with_ai(user_id, messages):
             user_message = msg['content']
             break
 
-    # 构建 RAG 上下文
-    rag_context = build_rag_context(user_message)
+    # 构建 RAG 上下文（失败不影响对话）
+    rag_context = ''
+    try:
+        rag_context = build_rag_context(user_message)
+    except Exception:
+        _logger.error(f'RAG context build failed: {traceback.format_exc()}')
 
     # 构建 system prompt
     system_content = SYSTEM_PROMPT_TEMPLATE.format(rag_context=rag_context or '(暂无参考资料)')

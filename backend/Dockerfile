@@ -2,6 +2,9 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
+# chromadb 需要 sqlite3 运行时库
+RUN apt-get update && apt-get install -y --no-install-recommends libsqlite3-0 && rm -rf /var/lib/apt/lists/*
+
 # 如果服务器在国内，取消下面一行的注释以使用清华镜像加速
 RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 

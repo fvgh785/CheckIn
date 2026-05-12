@@ -51,7 +51,11 @@ def handle_chat_send():
         messages.append({'role': m['role'], 'content': m['content']})
 
     # 调用 AI
-    reply, token_used = chat_with_ai(user_id, messages)
+    try:
+        reply, token_used = chat_with_ai(user_id, messages)
+    except Exception:
+        _logger.error(f'chat_with_ai failed: {traceback.format_exc()}')
+        return jsonify({'error': 'AI服务暂不可用，请稍后再试'}), 500
 
     # 事后校验：实际消耗是否超过当日剩余额度
     quota_after = check_chat_quota(user_id)
