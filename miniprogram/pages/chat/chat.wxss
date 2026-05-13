@@ -119,7 +119,7 @@
 /* 消息列表 */
 .msg-list {
   flex: 1;
-  padding: 16rpx 24rpx;
+  padding: 16rpx 0;
   overflow-y: auto;
 }
 
@@ -175,7 +175,7 @@
   display: flex;
   align-items: flex-start;
   margin-bottom: 24rpx;
-  width: 100%;
+  padding: 0 24rpx;
   box-sizing: border-box;
 }
 
@@ -214,6 +214,7 @@
   font-size: 30rpx;
   line-height: 1.6;
   word-break: break-all;
+  overflow-wrap: break-word;
 }
 
 .bubble-ai {
