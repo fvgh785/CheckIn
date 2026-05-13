@@ -16,9 +16,14 @@ Page({
     pet: null,
     // 补签卡
     makeupInfo: null,
-    makeupDate: '',
-    makeupStartDate: '',
-    makeupEndDate: ''
+    // 补签卡日历
+    showCalendar: false,
+    calYear: 0,
+    calMonth: 0,
+    calDays: [],
+    calCanPrev: true,
+    calCanNext: false,
+    calMakeupRemaining: 0
   },
 
   onLoad() {
@@ -122,16 +127,7 @@ Page({
   async fetchMakeupInfo() {
     try {
       const res = await app.request('/checkin/makeup/info');
-      // 计算可选日期范围：当月1号 ~ 昨天
-      const now = new Date();
-      const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
-      const yesterday = new Date(now.getTime() - 86400000);
-      const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
-      this.setData({
-        makeupInfo: res,
-        makeupStartDate: monthStart,
-        makeupEndDate: yesterdayStr
-      });
+      this.setData({ makeupInfo: res });
     } catch (e) {
       console.error('获取补签卡信息失败:', e);
     }
@@ -195,27 +191,156 @@ Page({
     wx.switchTab({ url: '/pages/profile/profile' });
   },
 
-  // ======================== 补签卡 ========================
+  // ======================== 补签卡日历 ========================
 
-  async handleMakeupDateChange(e) {
-    const targetDate = e.detail.value;
+  openCalendar() {
+    const now = new Date();
+    this.setData({
+      showCalendar: true,
+      calYear: now.getFullYear(),
+      calMonth: now.getMonth() + 1
+    });
+    this.fetchCalendarData();
+  },
+
+  closeCalendar() {
+    this.setData({ showCalendar: false });
+  },
+
+  noop() {},
+
+  async fetchCalendarData() {
+    const { calYear, calMonth } = this.data;
+    try {
+      const res = await app.request(`/checkin/makeup/calendar?year=${calYear}&month=${calMonth}`);
+      this.buildCalendarDays(res);
+    } catch (e) {
+      console.error('获取日历数据失败:', e);
+    }
+  },
+
+  buildCalendarDays(data) {
+    const { year, month, checked_dates, makeup_dates, makeup_info } = data;
+    const checkedSet = new Set(checked_dates);
+    const makeupSet = new Set(makeup_dates);
+
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    // 当月第一天是星期几（0=周日）
+    const firstDay = new Date(year, month - 1, 1);
+    const startWeekDay = firstDay.getDay();
+
+    // 当月总天数
+    const daysInMonth = new Date(year, month, 0).getDate();
+
+    // 当前月份是否可前进（不能超过当月）
+    const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const viewMonth = new Date(year, month - 1, 1);
+    const canNext = viewMonth < currentMonth;
+    const canPrev = true; // 总是可以往前翻
+
+    const days = [];
+
+    // 填充前置空白
+    for (let i = 0; i < startWeekDay; i++) {
+      days.push({ date: `pad-${i}`, day: '', cls: 'cal-day-pad', isChecked: false, isMakeup: false, canTap: false });
+    }
+
+    // 填充当月日期
+    for (let d = 1; d <= daysInMonth; d++) {
+      const m = String(month).padStart(2, '0');
+      const dd = String(d).padStart(2, '0');
+      const dateStr = `${year}-${m}-${dd}`;
+      const cellDate = new Date(year, month - 1, d);
+      const isToday = dateStr === todayStr;
+      const isFuture = cellDate > todayDate;
+      const isChecked = checkedSet.has(dateStr);
+      const isMakeup = makeupSet.has(dateStr);
+      const remaining = makeup_info ? makeup_info.remaining : 0;
+      // 可补签条件：过去的日期 + 未打卡 + 还有补签卡剩余
+      const isAvailable = !isFuture && !isToday && !isChecked && remaining > 0;
+
+      let cls = 'cal-day-normal';
+      if (isToday) cls += ' cal-day-today';
+      if (isChecked && !isMakeup) cls += ' cal-day-checked';
+      else if (isMakeup) cls += ' cal-day-makeup';
+      else if (isAvailable) cls += ' cal-day-available';
+      else if (isFuture || isToday) cls += ' cal-day-future';
+
+      days.push({
+        date: dateStr,
+        day: d,
+        cls,
+        isChecked,
+        isMakeup,
+        isAvailable,
+        canTap: isAvailable
+      });
+    }
+
+    this.setData({
+      calDays: days,
+      calCanPrev: canPrev,
+      calCanNext: canNext,
+      calMakeupRemaining: makeup_info ? makeup_info.remaining : 0
+    });
+  },
+
+  calPrevMonth() {
+    let { calYear, calMonth } = this.data;
+    if (calMonth === 1) {
+      calYear -= 1;
+      calMonth = 12;
+    } else {
+      calMonth -= 1;
+    }
+    this.setData({ calYear, calMonth });
+    this.fetchCalendarData();
+  },
+
+  calNextMonth() {
+    if (!this.data.calCanNext) return;
+    let { calYear, calMonth } = this.data;
+    if (calMonth === 12) {
+      calYear += 1;
+      calMonth = 1;
+    } else {
+      calMonth += 1;
+    }
+    this.setData({ calYear, calMonth });
+    this.fetchCalendarData();
+  },
+
+  async calTapDay(e) {
+    const targetDate = e.currentTarget.dataset.date;
     if (!targetDate) return;
 
-    this.setData({ loading: true });
-    try {
-      const res = await app.request('/checkin/makeup', {
-        method: 'POST',
-        data: { date: targetDate }
-      });
-      wx.showToast({ title: `已补签 ${targetDate}`, icon: 'success' });
-      // 刷新补签卡信息和打卡统计
-      this.fetchMakeupInfo();
-      this.fetchStats();
-    } catch (e) {
-      const msg = (e && e.data && e.data.error) || (e && e.data && e.data.message) || '补签失败';
-      wx.showToast({ title: msg, icon: 'none' });
-    } finally {
-      this.setData({ loading: false });
-    }
+    wx.showModal({
+      title: '使用补签卡',
+      content: `确认对 ${targetDate} 使用一张补签卡吗？`,
+      success: async (res) => {
+        if (!res.confirm) return;
+        this.setData({ loading: true });
+        try {
+          await app.request('/checkin/makeup', {
+            method: 'POST',
+            data: { date: targetDate }
+          });
+          wx.showToast({ title: `已补签 ${targetDate}`, icon: 'success' });
+          // 刷新数据
+          this.fetchMakeupInfo();
+          this.fetchStats();
+          // 刷新日历
+          this.fetchCalendarData();
+        } catch (err) {
+          const msg = (err && err.data && err.data.error) || (err && err.data && err.data.message) || '补签失败';
+          wx.showToast({ title: msg, icon: 'none' });
+        } finally {
+          this.setData({ loading: false });
+        }
+      }
+    });
   }
 });

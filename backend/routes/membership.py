@@ -11,6 +11,7 @@ from db_membership import (
     create_capsule, get_capsules, open_capsule,
     get_insight, get_insight_history,
     use_makeup_card, get_makeup_card_used_count, get_makeup_card_limit,
+    get_monthly_checkin_status,
     is_member_active, activate_membership,
     check_insight_quota, use_insight_quota,
 )
@@ -321,6 +322,41 @@ def handle_makeup_info():
         })
     except Exception:
         _logger.error(f'makeup_info failed: {traceback.format_exc()}')
+        return jsonify({'error': '服务器内部错误'}), 500
+
+
+@membership_bp.route('/checkin/makeup/calendar', methods=['GET'])
+@membership_required
+def handle_makeup_calendar():
+    """获取月度打卡日历数据，用于补签卡可视化"""
+    try:
+        today = date.today()
+        year = request.args.get('year', today.year, type=int)
+        month = request.args.get('month', today.month, type=int)
+
+        # 参数校验
+        if month < 1 or month > 12:
+            return jsonify({'error': '月份需在 1-12 之间'}), 400
+        if year < 2020 or year > today.year + 1:
+            return jsonify({'error': '年份无效'}), 400
+
+        status = get_monthly_checkin_status(g.user['userId'], year, month)
+        used = get_makeup_card_used_count(g.user['userId'])
+        limit_val = get_makeup_card_limit()
+
+        return jsonify({
+            'year': status['year'],
+            'month': status['month'],
+            'checked_dates': status['checked_dates'],
+            'makeup_dates': status['makeup_dates'],
+            'makeup_info': {
+                'used': used,
+                'limit': limit_val,
+                'remaining': max(0, limit_val - used),
+            }
+        })
+    except Exception:
+        _logger.error(f'makeup_calendar failed: {traceback.format_exc()}')
         return jsonify({'error': '服务器内部错误'}), 500
 
 

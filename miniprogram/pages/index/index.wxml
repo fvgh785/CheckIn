@@ -47,20 +47,72 @@
     </view>
   </view>
 
-  <!-- 补签卡信息（会员可见） -->
-  <picker wx:if="{{isMember && makeupInfo && makeupInfo.remaining > 0}}" mode="date" value="{{makeupDate}}" start="{{makeupStartDate}}" end="{{makeupEndDate}}" bindchange="handleMakeupDateChange" class="makeup-picker">
-    <view class="makeup-bar">
-      <view class="makeup-text">
-        <view class="makeup-icon"></view>
-        <text>补签卡：剩余 {{makeupInfo.remaining}}/{{makeupInfo.limit}} 张</text>
-      </view>
-      <text class="makeup-arrow">›</text>
-    </view>
-  </picker>
-  <view wx:elif="{{isMember && makeupInfo && makeupInfo.remaining <= 0}}" class="makeup-bar makeup-bar-empty">
+  <!-- 补签卡入口（会员可见） -->
+  <view wx:if="{{isMember && makeupInfo}}" class="makeup-bar {{makeupInfo.remaining > 0 ? '' : 'makeup-bar-empty'}}" bindtap="openCalendar">
     <view class="makeup-text">
       <view class="makeup-icon"></view>
       <text>补签卡：剩余 {{makeupInfo.remaining}}/{{makeupInfo.limit}} 张</text>
+    </view>
+    <text class="makeup-arrow">›</text>
+  </view>
+
+  <!-- 补签卡日历弹窗 -->
+  <view wx:if="{{showCalendar}}" class="calendar-overlay" bindtap="closeCalendar">
+    <view class="calendar-modal" catchtap="noop">
+      <!-- 关闭按钮 -->
+      <view class="cal-close" bindtap="closeCalendar">
+        <text>✕</text>
+      </view>
+
+      <!-- 月份导航 -->
+      <view class="cal-nav-row">
+        <view class="cal-nav-btn {{calCanPrev ? '' : 'cal-nav-disabled'}}" bindtap="calPrevMonth">
+          <text>◀</text>
+        </view>
+        <text class="cal-month-title">{{calYear}}年{{calMonth}}月</text>
+        <view class="cal-nav-btn {{calCanNext ? '' : 'cal-nav-disabled'}}" bindtap="calNextMonth">
+          <text>▶</text>
+        </view>
+      </view>
+
+      <!-- 星期标题 -->
+      <view class="cal-weekdays">
+        <text wx:for="{{['日','一','二','三','四','五','六']}}" wx:key="*this" class="cal-weekday">{{item}}</text>
+      </view>
+
+      <!-- 日期网格 -->
+      <view class="cal-days-grid">
+        <view wx:for="{{calDays}}" wx:key="date"
+              class="cal-day-cell {{item.cls}}"
+              bindtap="{{item.canTap ? 'calTapDay' : ''}}"
+              data-date="{{item.date}}">
+          <text class="cal-day-num">{{item.day}}</text>
+          <view wx:if="{{item.isChecked && !item.isMakeup}}" class="cal-mark cal-mark-checked">✓</view>
+          <view wx:elif="{{item.isMakeup}}" class="cal-mark cal-mark-makeup">↻</view>
+        </view>
+      </view>
+
+      <!-- 图例 -->
+      <view class="cal-legend">
+        <view class="cal-legend-item">
+          <view class="cal-legend-dot cal-dot-checked"></view>
+          <text>已打卡</text>
+        </view>
+        <view class="cal-legend-item">
+          <view class="cal-legend-dot cal-dot-makeup"></view>
+          <text>已补签</text>
+        </view>
+        <view class="cal-legend-item">
+          <view class="cal-legend-dot cal-dot-avail"></view>
+          <text>可补签</text>
+        </view>
+      </view>
+
+      <!-- 补签卡余量提示 -->
+      <view class="cal-bottom-info">
+        <text wx:if="{{calMakeupRemaining > 0}}" class="cal-remain-tip">点击灰色日期使用补签卡（剩余 {{calMakeupRemaining}} 张）</text>
+        <text wx:else class="cal-remain-tip cal-no-remain">本月补签卡已用完</text>
+      </view>
     </view>
   </view>
 

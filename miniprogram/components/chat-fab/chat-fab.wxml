@@ -1,3 +1,17 @@
-<view wx:if="{{visible}}" class="fab" bindtap="handleTap">
-  <text class="fab-icon">💬</text>
-</view>
+<movable-area wx:if="{{visible}}" class="fab-area">
+  <movable-view
+    class="fab-movable"
+    direction="all"
+    x="{{x}}"
+    y="{{y}}"
+    out-of-bounds="{{true}}"
+    damping="{{40}}"
+    bindtouchstart="onTouchStart"
+    bindtouchend="onTouchEnd"
+    bindchange="onChange"
+  >
+    <view class="fab">
+      <text class="fab-icon">💬</text>
+    </view>
+  </movable-view>
+</movable-area>

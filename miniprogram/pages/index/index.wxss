@@ -272,20 +272,18 @@
   margin: 0 20rpx;
 }
 
-/* 补签卡信息条 */
-.makeup-picker {
-  margin: 32rpx 0;
-}
-
+/* 补签卡入口条 */
 .makeup-bar {
   display: flex;
   align-items: center;
   justify-content: center;
-  text-align: center;
+  margin: 32rpx 0;
+  padding: 16rpx 0;
+  cursor: pointer;
 }
 
 .makeup-bar-empty {
-  margin: 32rpx 0;
+  opacity: 0.6;
 }
 
 .makeup-text {
@@ -295,8 +293,14 @@
   font-size: 28rpx;
   color: #4A7A75;
   background: #E8F7F6;
-  padding: 8rpx 24rpx;
-  border-radius: 20rpx;
+  padding: 10rpx 28rpx;
+  border-radius: 24rpx;
+  transition: all 0.2s;
+}
+
+.makeup-bar:active .makeup-text {
+  background: #D4F1F0;
+  transform: scale(0.97);
 }
 
 .makeup-icon {
@@ -313,6 +317,251 @@
   color: #5EBFB7;
   margin-left: 8rpx;
   font-weight: 700;
+}
+
+/* ========== 补签卡日历弹窗 ========== */
+.calendar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calendar-modal {
+  width: 630rpx;
+  background: #fff;
+  border-radius: 32rpx;
+  padding: 40rpx 32rpx 32rpx;
+  position: relative;
+  box-shadow: 0 24rpx 60rpx rgba(0, 0, 0, 0.12);
+}
+
+.cal-close {
+  position: absolute;
+  top: 20rpx;
+  right: 24rpx;
+  width: 48rpx;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  color: #8BB8B2;
+  z-index: 1;
+}
+
+/* 月份导航 */
+.cal-nav-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28rpx;
+  padding: 0 8rpx;
+}
+
+.cal-nav-btn {
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  color: #5EBFB7;
+  border-radius: 50%;
+  background: #F0FAF9;
+  transition: all 0.2s;
+}
+
+.cal-nav-btn:active {
+  background: #D4F1F0;
+  transform: scale(0.92);
+}
+
+.cal-nav-disabled {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.cal-month-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #2C4A47;
+  letter-spacing: 1rpx;
+}
+
+/* 星期标题 */
+.cal-weekdays {
+  display: flex;
+  margin-bottom: 12rpx;
+}
+
+.cal-weekday {
+  flex: 1;
+  text-align: center;
+  font-size: 26rpx;
+  color: #8BB8B2;
+  font-weight: 500;
+  padding: 8rpx 0;
+}
+
+/* 日期网格 */
+.cal-days-grid {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.cal-day-cell {
+  width: calc(100% / 7);
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border-radius: 16rpx;
+  transition: all 0.15s;
+  margin-bottom: 2rpx;
+}
+
+.cal-day-pad {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cal-day-normal {
+  color: #2C4A47;
+}
+
+.cal-day-num {
+  font-size: 30rpx;
+  font-weight: 500;
+  line-height: 1;
+}
+
+/* 当天 */
+.cal-day-today {
+  color: #5EBFB7;
+}
+
+.cal-day-today .cal-day-num {
+  font-weight: 800;
+}
+
+.cal-day-today::after {
+  content: '';
+  position: absolute;
+  bottom: 4rpx;
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: 50%;
+  background: #5EBFB7;
+}
+
+/* 已打卡（绿色背景+勾） */
+.cal-day-checked {
+  background: linear-gradient(135deg, #D4F1F0, #C5EDEB);
+  color: #2C4A47;
+}
+
+.cal-mark {
+  font-size: 20rpx;
+  line-height: 1;
+  margin-top: 2rpx;
+}
+
+.cal-mark-checked {
+  color: #3DAFA8;
+  font-weight: 700;
+}
+
+/* 已补签（深色背景+回旋标） */
+.cal-day-makeup {
+  background: linear-gradient(135deg, #B8E8E3, #81D8D0);
+  color: #2C4A47;
+}
+
+.cal-mark-makeup {
+  color: #2A9D95;
+  font-weight: 700;
+}
+
+/* 可补签（浅灰底色，可点击） */
+.cal-day-available {
+  color: #6B9E99;
+  background: #F5FBFA;
+  border: 2rpx dashed #C5EDEB;
+}
+
+.cal-day-available:active {
+  background: #D4F1F0;
+  border-color: #5EBFB7;
+  transform: scale(0.93);
+}
+
+/* 未来日期（灰显，不可点击） */
+.cal-day-future {
+  color: #C5D4D2;
+  pointer-events: none;
+}
+
+/* 图例 */
+.cal-legend {
+  display: flex;
+  justify-content: center;
+  gap: 32rpx;
+  margin-top: 24rpx;
+  padding-top: 20rpx;
+  border-top: 1rpx solid #E8F7F6;
+}
+
+.cal-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  font-size: 24rpx;
+  color: #6B9E99;
+}
+
+.cal-legend-dot {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+}
+
+.cal-dot-checked {
+  background: #C5EDEB;
+  border: 2rpx solid #3DAFA8;
+}
+
+.cal-dot-makeup {
+  background: #81D8D0;
+  border: 2rpx solid #2A9D95;
+}
+
+.cal-dot-avail {
+  background: #F5FBFA;
+  border: 2rpx dashed #C5EDEB;
+}
+
+/* 底部提示 */
+.cal-bottom-info {
+  margin-top: 20rpx;
+  text-align: center;
+}
+
+.cal-remain-tip {
+  font-size: 26rpx;
+  color: #4A7A75;
+}
+
+.cal-no-remain {
+  color: #8BB8B2;
 }
 
 .loading {

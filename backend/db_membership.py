@@ -839,6 +839,34 @@ def use_insight_quota(user_id):
 from db_admin import get_config_value, DEFAULT_MAKEUP_CARD_LIMIT
 
 
+def get_monthly_checkin_status(user_id, year, month):
+    """获取用户指定月份的打卡和补签状态"""
+    init_db()
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                'SELECT check_date FROM check_ins WHERE user_id = %s AND YEAR(check_date) = %s AND MONTH(check_date) = %s',
+                (user_id, year, month)
+            )
+            checked_dates = [str(r['check_date']) for r in cur.fetchall()]
+
+            cur.execute(
+                'SELECT used_date FROM makeup_cards WHERE user_id = %s AND YEAR(used_date) = %s AND MONTH(used_date) = %s',
+                (user_id, year, month)
+            )
+            makeup_dates = [str(r['used_date']) for r in cur.fetchall()]
+
+        return {
+            'year': year,
+            'month': month,
+            'checked_dates': checked_dates,
+            'makeup_dates': makeup_dates,
+        }
+    finally:
+        conn.close()
+
+
 def get_makeup_card_limit():
     """从数据库动态读取补签卡月限额"""
     try:
