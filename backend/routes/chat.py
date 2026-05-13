@@ -91,7 +91,7 @@ def handle_chat_history():
         page_size = 20
 
     try:
-        result = get_chat_history(g.user['userId'], page=page, page_size=page_size)
+        result = get_chat_history(g.user['userId'], page=page, page_size=page_size, newest_first=True)
         return jsonify(result)
     except Exception:
         _logger.error(f'get_chat_history failed: {traceback.format_exc()}')

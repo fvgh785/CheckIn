@@ -162,7 +162,7 @@ Page({
     const page = append ? this.data.page + 1 : 1;
     try {
       const res = await app.request(`/chat/history?page=${page}&page_size=20`);
-      const newMsgs = (res.messages || []).map(m => ({
+      const newMsgs = (res.messages || []).reverse().map(m => ({
         ...m,
         contentNodes: m.role === 'assistant' ? parseMarkdownToNodes(m.content) : undefined
       }));
