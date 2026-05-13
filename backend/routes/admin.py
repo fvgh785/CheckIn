@@ -1,4 +1,5 @@
 import logging
+import os
 import traceback
 import uuid
 from datetime import date, datetime
@@ -1267,5 +1268,125 @@ def handle_knowledge_bases_delete(kb_id):
 @admin_bp.route('/knowledge-bases/rebuild-index', methods=['POST'])
 @admin_required
 def handle_knowledge_bases_rebuild_index():
-    """手动触发索引重建（已切换为关键词匹配检索，无需重建）"""
-    return jsonify({'success': True, 'message': '当前使用关键词匹配检索，无需重建索引'})
+    """自动读取小程序配置，更新「小程序功能介绍」知识库条目"""
+    import json as _json
+    
+    # 读取小程序 app.json 获取当前页面和Tab配置
+    miniprogram_root = os.path.join(os.path.dirname(__file__), '..', '..', 'miniprogram')
+    app_json_path = os.path.join(miniprogram_root, 'app.json')
+    
+    tab_descriptions = []
+    other_pages = []
+    
+    try:
+        with open(app_json_path, 'r', encoding='utf-8') as f:
+            app_config = _json.load(f)
+        
+        # 解析Tab栏
+        tab_bar = app_config.get('tabBar', {})
+        tab_list = tab_bar.get('list', [])
+        pages = app_config.get('pages', [])
+        tab_page_paths = {item.get('pagePath', '') for item in tab_list}
+        
+        # Tab页面描述映射
+        tab_feature_map = {
+            'pages/index/index': '每日打卡：记录每日打卡，查看连续打卡天数、最长连续打卡天数、累计打卡天数。支持查看打卡日历，会员可使用补签卡补签漏打卡的日期。首页展示宠物状态，打卡可喂养宠物。',
+            'pages/squad/squad': '打卡小队：创建或加入打卡小队（最多10人），与好友一起坚持打卡。小队展示连续打卡天数和历史最长打卡天数，成员之间互相激励。仅会员可创建小队，加入小队无会员限制。',
+            'pages/insight/insight': 'AI周报：AI智能分析你的打卡数据，每周自动生成个性化打卡报告，包含打卡趋势、习惯分析和鼓励建议。会员专属功能。',
+            'pages/wish/wish': '心愿清单：设定个人打卡奖励目标（如"坚持30天奖励自己一顿大餐"），支持7-365天灵活设置。每日打卡自动推进心愿进度，达成时弹出庆祝提示。会员专属功能。',
+            'pages/profile/profile': '个人中心：编辑昵称、绑定/换绑邮箱。查看会员状态、有效期和特权。管理宠物（改名）、查看补签卡剩余额度。查看打卡统计概览。',
+        }
+        
+        for tab in tab_list:
+            path = tab.get('pagePath', '')
+            text = tab.get('text', '')
+            desc = tab_feature_map.get(path, f'{text}页面')
+            tab_descriptions.append(f'{text}（{desc}）')
+        
+        # 非Tab页面描述映射
+        other_page_map = {
+            'pages/login/login': '微信登录：通过微信授权一键登录，无需注册账号。首次登录自动获得30天免费会员体验。',
+            'pages/capsule/capsule': '时光胶囊：给未来的自己写一封信，设定需要连续打卡多少天后才能开启（7-365天）。未开启的胶囊内容保密，达成条件后开启弹窗展示。会员专属功能。',
+            'pages/chat/chat': 'AI智能助手：智能对话助手，可回答小程序功能介绍、使用帮助、打卡建议等问题。首页悬浮按钮可快速唤起。支持话题切换检测和多轮对话。',
+        }
+        
+        for page_path in pages:
+            if page_path not in tab_page_paths and page_path in other_page_map:
+                other_pages.append(other_page_map[page_path])
+                
+    except Exception as e:
+        _logger.warning(f'Failed to read miniprogram app.json: {e}, using default feature description')
+    
+    # 如果读取失败，使用默认描述
+    if not tab_descriptions:
+        tab_descriptions = [
+            '首页（每日打卡：记录每日打卡，查看连续/累计天数，支持补签卡和宠物喂养）',
+            '小队（打卡小队：创建或加入小队，与好友一起坚持打卡，最多10人）',
+            'AI周报（AI周报：AI智能分析打卡数据，每周自动生成个性化报告）',
+            '心愿（心愿清单：设定打卡目标奖励，打卡自动推进进度）',
+            '我的（个人中心：编辑资料、查看会员、管理宠物和补签卡）',
+        ]
+        other_pages = [
+            '微信登录：通过微信授权一键登录，首次登录自动获得30天免费会员体验。',
+            '时光胶囊：给未来的自己写信，设定连续打卡天数后开启，会员专属。',
+            'AI智能助手：智能对话助手，回答使用问题，首页悬浮按钮快速唤起。',
+        ]
+    
+    # 组装功能介绍内容
+    parts = ['【每日打卡小程序 - 功能介绍】\n']
+    
+    parts.append('📱 五大核心页面：')
+    for i, desc in enumerate(tab_descriptions, 1):
+        parts.append(f'{i}. {desc}')
+    
+    parts.append('\n🔧 其他功能页面：')
+    for i, desc in enumerate(other_pages, 1):
+        parts.append(f'{i}. {desc}')
+    
+    parts.append('\n💎 会员体系：')
+    parts.append('目前提供高级会员等级。会员可享宠物养成、每月3张补签卡、打卡小队创建、AI周报、心愿清单、时光胶囊等全部特权。新用户首次登录自动赠送30天免费会员。管理员可在后台为用户开通/续费/撤销会员。')
+    
+    parts.append('\n🐾 宠物养成系统：')
+    parts.append('每位用户拥有专属宠物。每日打卡可喂养宠物，宠物有心情值和饥饿度，达到一定经验值后会进化升级。会员专属功能，可在个人中心给宠物改名。')
+    
+    parts.append('\n📝 补签卡机制：')
+    parts.append('会员每月自动获得3张补签卡，可用于补签当月漏打卡的日期（不可跨月）。补签卡月底清零不累计。首页打卡日历可查看已打卡和可补签的日期。')
+    
+    parts.append('\n🤖 AI智能助手：')
+    parts.append('首页悬浮按钮可唤起AI对话窗口。支持回答小程序功能介绍、使用帮助、打卡建议等各类问题。基于知识库检索提供准确回复。每日有Token使用上限，可在后台配置。')
+    
+    feature_content = '\n'.join(parts)
+    
+    # Upsert 到知识库（按标题匹配）
+    try:
+        conn = get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    'SELECT id FROM knowledge_bases WHERE title = %s LIMIT 1',
+                    ('小程序功能介绍',)
+                )
+                existing = cur.fetchone()
+                
+                if existing:
+                    cur.execute(
+                        'UPDATE knowledge_bases SET content = %s, category = %s, enabled = 1 WHERE id = %s',
+                        (feature_content, 'feature', existing['id'])
+                    )
+                    msg = '小程序功能介绍已更新'
+                else:
+                    kb_id = str(uuid.uuid4())
+                    cur.execute(
+                        'INSERT INTO knowledge_bases (id, title, content, category, enabled) VALUES (%s, %s, %s, %s, 1)',
+                        (kb_id, '小程序功能介绍', feature_content, 'feature')
+                    )
+                    msg = '小程序功能介绍已创建'
+                conn.commit()
+            
+            write_admin_log(g.admin['id'], 'update', 'knowledge_base', 'auto', msg)
+            return jsonify({'success': True, 'message': msg, 'tab_count': len(tab_descriptions), 'other_count': len(other_pages)})
+        finally:
+            conn.close()
+    except Exception:
+        _logger.error(f'Failed to update feature intro: {traceback.format_exc()}')
+        return jsonify({'error': '更新功能介绍失败'}), 500

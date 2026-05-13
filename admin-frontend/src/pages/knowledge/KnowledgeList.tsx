@@ -116,8 +116,8 @@ export default function KnowledgeList() {
     setRebuilding(true);
     try {
       await rebuildKnowledgeIndex();
-      message.success('向量索引重建完成');
-    } catch { message.error('重建失败'); }
+      message.success('小程序功能介绍已更新');
+    } catch { message.error('更新失败'); }
     finally { setRebuilding(false); }
   };
 
@@ -161,7 +161,7 @@ export default function KnowledgeList() {
             onChange={(v) => { setCategoryFilter(v || ''); }}
             options={CATEGORIES.map(c => ({ value: c.value, label: c.label }))}
           />
-          <Button icon={<ReloadOutlined />} loading={rebuilding} onClick={handleRebuild}>重建向量索引</Button>
+          <Button icon={<ReloadOutlined />} loading={rebuilding} onClick={handleRebuild}>更新功能介绍</Button>
           <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>新增知识库</Button>
         </Space>
       </div>

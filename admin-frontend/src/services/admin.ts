@@ -128,5 +128,6 @@ export const updateKnowledgeBase = (id: string, data: Record<string, unknown>) =
 export const deleteKnowledgeBase = (id: string) =>
   api.delete(`/knowledge-bases/${id}`);
 
+// 自动更新「小程序功能介绍」知识库条目
 export const rebuildKnowledgeIndex = () =>
   api.post('/knowledge-bases/rebuild-index');
