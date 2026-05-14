@@ -208,7 +208,7 @@ Page({
       return;
     }
     if (!this.data.isMember) {
-      wx.showToast({ title: 'AI对话为会员专属功能', icon: 'none' });
+      wx.showToast({ title: '智能对话为会员专属功能', icon: 'none' });
       return;
     }
     const message = this.data.inputValue.trim();
@@ -258,7 +258,7 @@ Page({
         app.handleAuthExpired();
         this.setData({ isLoggedIn: false });
       } else if (e.statusCode === 503) {
-        wx.showToast({ title: 'AI助手暂未开放', icon: 'none' });
+        wx.showToast({ title: '智能助手暂未开放', icon: 'none' });
       } else if (e.statusCode === 429) {
         wx.showToast({ title: '今日额度已用完', icon: 'none' });
       } else {

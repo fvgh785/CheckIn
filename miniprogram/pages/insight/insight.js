@@ -3,6 +3,7 @@ const app = getApp();
 Page({
   data: {
     isLoggedIn: false,
+    isMember: false,
     insight: null,
     insights: [],
     loading: false,
@@ -12,7 +13,7 @@ Page({
 
   onShow() {
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
-      this.getTabBar().setData({ selected: 2 });
+      this.getTabBar().setData({ selected: '/pages/insight/insight' });
     }
     this.checkLoginStatus();
   },
@@ -22,15 +23,33 @@ Page({
     if (token) {
       app.globalData.token = token;
       this.setData({ isLoggedIn: true });
-      this.loadData();
+      this.loadAll();
     } else {
       this.setData({
         isLoggedIn: false,
+        isMember: false,
         insight: null,
         insights: [],
         quota: { remaining: 0, limit: 3 }
       });
     }
+  },
+
+  async loadMembershipStatus() {
+    if (!this.data.isLoggedIn) return;
+    try {
+      const res = await app.request('/membership/status');
+      const active = res.active || false;
+      this.setData({ isMember: active });
+      app.globalData.isMember = active;
+    } catch (e) {
+      console.error('获取会员状态失败:', e);
+    }
+  },
+
+  async loadAll() {
+    await this.loadMembershipStatus();
+    this.loadData();
   },
 
   async loadData() {

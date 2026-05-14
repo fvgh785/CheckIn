@@ -195,6 +195,36 @@
   display: block;
 }
 
+/* 非会员专属提示 */
+.member-prompt {
+  text-align: center;
+  padding: 80rpx 40rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.member-prompt-emoji {
+  font-size: 80rpx;
+  display: block;
+  margin-bottom: 20rpx;
+}
+
+.member-prompt-title {
+  font-size: 34rpx;
+  color: #2C4A47;
+  font-weight: 600;
+  display: block;
+}
+
+.member-prompt-desc {
+  font-size: 28rpx;
+  color: #8BB8B2;
+  display: block;
+  line-height: 1.6;
+}
+
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }

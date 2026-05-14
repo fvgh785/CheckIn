@@ -29,7 +29,7 @@ Page({
 
   onShow() {
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
-      this.getTabBar().setData({ selected: 4 });
+      this.getTabBar().setData({ selected: '/pages/profile/profile' });
     }
     this.checkLoginStatus();
   },
@@ -61,6 +61,7 @@ Page({
     try {
       const memberRes = await app.request('/membership/status');
       this.setData({ isMember: memberRes.active, membership: memberRes });
+      app.globalData.isMember = memberRes.active;
       if (memberRes.active) {
         this.loadMemberData();
       }

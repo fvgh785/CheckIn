@@ -13,6 +13,15 @@
 
   <!-- 已登录内容 -->
   <block wx:else>
+  <!-- 非会员提示 -->
+  <view wx:if="{{!isMember}}" class="member-prompt">
+    <text class="member-prompt-emoji">🌟</text>
+    <text class="member-prompt-title">会员专属功能</text>
+    <text class="member-prompt-desc">开通会员后即可查看智能周报，获取专属打卡分析与建议</text>
+  </view>
+
+  <!-- 会员内容 -->
+  <block wx:else>
   <!-- 本周洞察 -->
   <view wx:if="{{insight}}" class="insight-card current">
     <view class="card-badge">📊 本周洞察</view>
@@ -50,6 +59,7 @@
   <view wx:if="{{loading}}" class="loading">
     <text>加载中...</text>
   </view>
+  </block>
   </block>
   <chat-fab visible="{{isLoggedIn}}" />
 </view>

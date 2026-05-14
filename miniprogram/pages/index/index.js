@@ -33,7 +33,7 @@ Page({
 
   onShow() {
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
-      this.getTabBar().setData({ selected: 0 });
+      this.getTabBar().setData({ selected: '/pages/index/index' });
     }
     this.checkLoginStatus();
   },
@@ -98,6 +98,7 @@ Page({
     try {
       const res = await app.request('/membership/status');
       this.setData({ isMember: res.active });
+      app.globalData.isMember = res.active;
       if (res.active) {
         // 获取宠物数据
         this.fetchPet();
