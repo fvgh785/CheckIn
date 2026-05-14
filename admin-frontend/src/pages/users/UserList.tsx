@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Table, Input, Typography, Tag, Space, Button, Modal, InputNumber, message } from 'antd';
-import { SearchOutlined, EyeOutlined, CrownOutlined } from '@ant-design/icons';
+import { SearchOutlined, EyeOutlined, CrownOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { getUserList, activateMembership } from '../../services/admin';
+import { getUserList, activateMembership, deleteUser } from '../../services/admin';
 import dayjs from 'dayjs';
 
 const { Title } = Typography;
@@ -27,6 +27,8 @@ export default function UserList() {
   const [activateModalOpen, setActivateModalOpen] = useState(false);
   const [activatingUserId, setActivatingUserId] = useState('');
   const [months, setMonths] = useState(1);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deletingUser, setDeletingUser] = useState<User | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -55,6 +57,17 @@ export default function UserList() {
     } catch { /* handled */ }
   };
 
+  const handleDeleteUser = async () => {
+    if (!deletingUser) return;
+    try {
+      await deleteUser(deletingUser.user_id);
+      message.success('用户已删除');
+      setDeleteModalOpen(false);
+      setDeletingUser(null);
+      loadUsers();
+    } catch { /* handled */ }
+  };
+
   const columns = [
     { title: 'User ID', dataIndex: 'user_id', key: 'user_id', width: 180, ellipsis: true },
     { title: 'Open ID', dataIndex: 'open_id', key: 'open_id', width: 160, ellipsis: true },
@@ -78,6 +91,9 @@ export default function UserList() {
               <CrownOutlined /> 开通会员
             </a>
           )}
+          <a style={{ color: '#ff4d4f' }} onClick={() => { setDeletingUser(record); setDeleteModalOpen(true); }}>
+            <DeleteOutlined /> 删除
+          </a>
         </Space>
       ),
     },
@@ -121,6 +137,26 @@ export default function UserList() {
             <InputNumber min={1} max={36} value={months} onChange={(v) => setMonths(v || 1)} />
           </div>
         </div>
+      </Modal>
+
+      <Modal
+        title={<span><ExclamationCircleOutlined style={{ color: '#faad14', marginRight: 8 }} />确认删除用户</span>}
+        open={deleteModalOpen}
+        onOk={handleDeleteUser}
+        onCancel={() => { setDeleteModalOpen(false); setDeletingUser(null); }}
+        okText="确认删除"
+        cancelText="取消"
+        okButtonProps={{ danger: true }}
+      >
+        <p>确定要删除该用户及所有关联数据吗？此操作不可撤销。</p>
+        {deletingUser && (
+          <div style={{ marginTop: 12, padding: 12, background: '#fff7e6', borderRadius: 8 }}>
+            <p><strong>用户ID:</strong> {deletingUser.user_id}</p>
+            <p><strong>昵称:</strong> {deletingUser.nickname || '-'}</p>
+            <p><strong>手机号:</strong> {deletingUser.phone || '-'}</p>
+            <p><strong>邮箱:</strong> {deletingUser.email || '-'}</p>
+          </div>
+        )}
       </Modal>
     </div>
   );

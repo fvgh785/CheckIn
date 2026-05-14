@@ -116,6 +116,34 @@
   color: #A8D5CF;
 }
 
+/* 非会员限制提示 */
+.member-restrict {
+  text-align: center;
+  padding: 60rpx 40rpx;
+  flex-shrink: 0;
+}
+
+.member-restrict-emoji {
+  font-size: 80rpx;
+  display: block;
+  margin-bottom: 24rpx;
+}
+
+.member-restrict-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #2C4A47;
+  display: block;
+  margin-bottom: 12rpx;
+}
+
+.member-restrict-desc {
+  font-size: 28rpx;
+  color: #8BB8B2;
+  display: block;
+  line-height: 1.6;
+}
+
 /* 消息列表 */
 .msg-list {
   flex: 1;

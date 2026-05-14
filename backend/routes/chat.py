@@ -7,6 +7,7 @@ from chat import (
     get_chat_history, chat_with_ai, get_knowledge_bases, get_knowledge_base_detail,
     is_chat_enabled,
 )
+from db_membership import get_membership
 
 chat_bp = Blueprint('chat', __name__)
 _logger = logging.getLogger(__name__)
@@ -23,14 +24,20 @@ def handle_chat_send():
     if not is_chat_enabled():
         return jsonify({'success': False, 'message': 'AI助手功能当前已关闭'}), 503
 
+    user_id = g.user['userId']
+
+    # 检查会员状态：仅会员可使用AI对话
+    membership = get_membership(user_id)
+    is_member = membership.get('is_active') if membership else False
+    if not is_member:
+        return jsonify({'success': False, 'message': 'AI对话为会员专属功能，请先开通会员'}), 403
+
     data = request.get_json(silent=True) or {}
     user_message = data.get('message', '').strip()
     if not user_message:
         return jsonify({'error': '消息不能为空'}), 400
     if len(user_message) > 500:
         return jsonify({'error': '消息过长，请控制在500字以内'}), 400
-
-    user_id = g.user['userId']
 
     # 检查配额（预检：已超限则拒绝）
     pre_result = pre_check_chat_quota(user_id)

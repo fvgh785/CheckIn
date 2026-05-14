@@ -104,6 +104,7 @@ Page({
     hasMore: true,
     scrollToView: '',
     chatEnabled: true,
+    isMember: true,
     // 知识库详情弹窗
     kbModalVisible: false,
     kbDetail: null
@@ -123,14 +124,28 @@ Page({
       app.globalData.token = token;
       this.setData({ isLoggedIn: true });
       this.loadKnowledgeBases();
+      this.loadMembershipStatus();
       this.loadQuota();
       this.loadHistory(false);
     } else {
       this.setData({
         isLoggedIn: false,
         messages: [],
-        quota: { used: 0, remaining: 0, limit: 5000 }
+        quota: { used: 0, remaining: 0, limit: 5000 },
+        isMember: true
       });
+    }
+  },
+
+  async loadMembershipStatus() {
+    if (!this.data.isLoggedIn) return;
+    try {
+      const res = await app.request('/membership/status');
+      const isActive = res.is_active || false;
+      this.setData({ isMember: isActive });
+    } catch (e) {
+      // 请求失败默认可聊天（由后端兜底校验）
+      console.error('获取会员状态失败:', e);
     }
   },
 
@@ -190,6 +205,10 @@ Page({
   async handleSend() {
     if (!this.data.isLoggedIn) {
       wx.navigateTo({ url: '/pages/login/login' });
+      return;
+    }
+    if (!this.data.isMember) {
+      wx.showToast({ title: 'AI对话为会员专属功能', icon: 'none' });
       return;
     }
     const message = this.data.inputValue.trim();

@@ -1,13 +1,13 @@
 <view class="container">
   <view class="page-header">
-    <text class="page-title">AI 智能周报</text>
-    <text class="page-desc">AI分析你的打卡习惯，给出专属建议</text>
+    <text class="page-title">智能周报</text>
+    <text class="page-desc">智能分析你的打卡习惯，给出专属建议</text>
   </view>
 
   <!-- 未登录提示 -->
   <view wx:if="{{!isLoggedIn}}" class="login-guide">
     <text class="login-guide-emoji">🔐</text>
-    <text class="login-guide-text">请先登录后查看AI周报</text>
+    <text class="login-guide-text">请先登录后查看智能周报</text>
     <button class="generate-btn" bindtap="goLogin">去登录</button>
   </view>
 
@@ -27,7 +27,7 @@
   <view wx:if="{{!insight && !loading && !generating}}" class="empty-card">
     <text class="empty-emoji">🤖</text>
     <text class="empty-text">本周洞察尚未生成</text>
-    <text class="empty-sub">点击下方按钮，AI教练为你分析本周打卡</text>
+    <text class="empty-sub">点击下方按钮，智能教练为你分析本周打卡</text>
     <button wx:if="{{quota.remaining > 0}}" class="generate-btn" bindtap="handleGenerate">✨ 生成本周洞察</button>
     <text wx:else class="quota-exhausted center">今日生成次数已用完，明天再来吧</text>
     <text class="quota-tip center" wx:if="{{quota.remaining > 0}}">今日剩余 {{quota.remaining}}/{{quota.limit}} 次</text>
@@ -35,7 +35,7 @@
 
   <view wx:if="{{generating}}" class="generating-card">
     <text class="generating-emoji">⏳</text>
-    <text class="generating-text">AI正在分析你的打卡数据...</text>
+    <text class="generating-text">智能分析中...</text>
   </view>
 
   <!-- 历史洞察 -->

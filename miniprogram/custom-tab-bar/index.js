@@ -16,7 +16,7 @@ Component({
       },
       {
         pagePath: '/pages/insight/insight',
-        text: 'AI周报',
+        text: '周报',
         iconPath: '/images/tab_ai.png',
         selectedIconPath: '/images/tab_ai_active.png'
       },

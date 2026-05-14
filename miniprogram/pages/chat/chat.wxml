@@ -29,12 +29,21 @@
       </view>
     </view>
 
-    <!-- 配额提示 -->
-    <view class="quota-bar">
+    <!-- 非会员提示 -->
+    <view wx:if="{{!isMember}}" class="member-restrict">
+      <text class="member-restrict-emoji">🌟</text>
+      <text class="member-restrict-title">会员专属功能</text>
+      <text class="member-restrict-desc">AI智能对话为会员专属功能，开通会员后即可与AI助手畅聊打卡相关问题</text>
+      <text class="member-restrict-desc">您仍可以浏览下方知识库了解小程序功能</text>
+    </view>
+
+    <!-- 会员可见：配额提示 -->
+    <view wx:if="{{isMember}}" class="quota-bar">
       <text class="quota-text">今日额度：{{quota.used}} / {{quota.limit}} token</text>
     </view>
 
-    <!-- 消息列表 -->
+    <!-- 消息列表（仅会员） -->
+    <view wx:if="{{isMember}}">
     <scroll-view
       class="msg-list"
       scroll-y
@@ -84,9 +93,10 @@
 
       <view id="msg-bottom"></view>
     </scroll-view>
+    </view>
 
-    <!-- 输入区 -->
-    <view class="input-bar">
+    <!-- 输入区（仅会员） -->
+    <view class="input-bar" wx:if="{{isMember}}">
       <input
         class="input-field"
         value="{{inputValue}}"

@@ -186,6 +186,41 @@ def handle_user_list():
         return jsonify({'error': '服务器内部错误'}), 500
 
 
+@admin_bp.route('/users/<user_id>', methods=['DELETE'])
+@admin_required
+def handle_delete_user(user_id):
+    """删除用户及其关联数据"""
+    try:
+        conn = get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute('SELECT * FROM users WHERE id = %s', (user_id,))
+                user = cur.fetchone()
+                if not user:
+                    return jsonify({'error': '用户不存在'}), 404
+
+                # 级联删除关联数据
+                cur.execute('DELETE FROM chat_history WHERE user_id = %s', (user_id,))
+                cur.execute('DELETE FROM ai_insights WHERE user_id = %s', (user_id,))
+                cur.execute('DELETE FROM makeup_cards WHERE user_id = %s', (user_id,))
+                cur.execute('DELETE FROM check_ins WHERE user_id = %s', (user_id,))
+                cur.execute('DELETE FROM time_capsules WHERE user_id = %s', (user_id,))
+                cur.execute('DELETE FROM wishes WHERE user_id = %s', (user_id,))
+                cur.execute('DELETE FROM squad_members WHERE user_id = %s', (user_id,))
+                cur.execute('DELETE FROM pets WHERE user_id = %s', (user_id,))
+                cur.execute('DELETE FROM memberships WHERE user_id = %s', (user_id,))
+                cur.execute('DELETE FROM users WHERE id = %s', (user_id,))
+                conn.commit()
+                write_admin_log(g.admin['id'], 'delete', 'user', user_id,
+                                f'删除用户: {user.get("nickname", "")} ({user.get("phone", "")})')
+                return jsonify({'success': True, 'message': '用户及关联数据已删除'})
+        finally:
+            conn.close()
+    except Exception:
+        _logger.error(f'delete user failed: {traceback.format_exc()}')
+        return jsonify({'error': '服务器内部错误'}), 500
+
+
 @admin_bp.route('/users/<user_id>', methods=['GET'])
 @admin_required
 def handle_user_detail(user_id):

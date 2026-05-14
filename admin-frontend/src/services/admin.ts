@@ -20,6 +20,8 @@ export const getUserList = (params: { page?: number; page_size?: number; keyword
 
 export const getUserDetail = (userId: string) => api.get(`/users/${userId}`);
 
+export const deleteUser = (userId: string) => api.delete(`/users/${userId}`);
+
 // ======================== 会员管理 ========================
 export const getMembershipList = (params: { page?: number; page_size?: number }) =>
   api.get('/memberships', { params });
