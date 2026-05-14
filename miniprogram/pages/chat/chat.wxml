@@ -43,8 +43,8 @@
     </view>
 
     <!-- 消息列表（仅会员） -->
-    <view wx:if="{{isMember}}">
     <scroll-view
+      wx:if="{{isMember}}"
       class="msg-list"
       scroll-y
       scroll-into-view="{{scrollToView}}"
@@ -93,7 +93,6 @@
 
       <view id="msg-bottom"></view>
     </scroll-view>
-    </view>
 
     <!-- 输入区（仅会员） -->
     <view class="input-bar" wx:if="{{isMember}}">

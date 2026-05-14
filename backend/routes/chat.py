@@ -28,7 +28,7 @@ def handle_chat_send():
 
     # 检查会员状态：仅会员可使用AI对话
     membership = get_membership(user_id)
-    is_member = membership.get('is_active') if membership else False
+    is_member = membership.get('active') if membership else False
     if not is_member:
         return jsonify({'success': False, 'message': 'AI对话为会员专属功能，请先开通会员'}), 403
 

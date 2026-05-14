@@ -141,7 +141,7 @@ Page({
     if (!this.data.isLoggedIn) return;
     try {
       const res = await app.request('/membership/status');
-      const isActive = res.is_active || false;
+      const isActive = res.active || false;
       this.setData({ isMember: isActive });
     } catch (e) {
       // 请求失败默认可聊天（由后端兜底校验）
