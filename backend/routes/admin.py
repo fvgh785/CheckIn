@@ -206,9 +206,14 @@ def handle_delete_user(user_id):
                 cur.execute('DELETE FROM check_ins WHERE user_id = %s', (user_id,))
                 cur.execute('DELETE FROM time_capsules WHERE user_id = %s', (user_id,))
                 cur.execute('DELETE FROM wishes WHERE user_id = %s', (user_id,))
+                # 先清理该用户所拥有小队的其他成员记录
+                cur.execute('DELETE FROM squad_members WHERE squad_id IN (SELECT id FROM squads WHERE owner_id = %s)', (user_id,))
                 cur.execute('DELETE FROM squad_members WHERE user_id = %s', (user_id,))
+                cur.execute('DELETE FROM squads WHERE owner_id = %s', (user_id,))
                 cur.execute('DELETE FROM pets WHERE user_id = %s', (user_id,))
                 cur.execute('DELETE FROM memberships WHERE user_id = %s', (user_id,))
+                cur.execute('DELETE FROM sessions WHERE user_id = %s', (user_id,))
+                cur.execute('DELETE FROM insight_generation_quota WHERE user_id = %s', (user_id,))
                 cur.execute('DELETE FROM users WHERE id = %s', (user_id,))
                 conn.commit()
                 write_admin_log(g.admin['id'], 'delete', 'user', user_id,
