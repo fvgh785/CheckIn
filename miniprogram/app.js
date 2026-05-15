@@ -1,13 +1,15 @@
 App({
   globalData: {
     apiBase: 'https://checkin.morefun.wang/api',
-    token: ''
+    token: '',
+    isLoggedIn: false
   },
 
   onLaunch() {
     const token = wx.getStorageSync('token');
     if (token) {
       this.globalData.token = token;
+      this.globalData.isLoggedIn = true;
     }
   },
 
@@ -15,6 +17,7 @@ App({
     const token = wx.getStorageSync('token');
     if (token) {
       this.globalData.token = token;
+      this.globalData.isLoggedIn = true;
     }
   },
 
@@ -55,7 +58,16 @@ App({
   handleAuthExpired() {
     wx.removeStorageSync('token');
     this.globalData.token = '';
+    this.globalData.isLoggedIn = false;
     wx.showToast({ title: '登录已失效', icon: 'none' });
+  },
+
+  /**
+   * 同步登录态给 tabBar
+   */
+  syncLoginStatus() {
+    const token = this.globalData.token || wx.getStorageSync('token');
+    this.globalData.isLoggedIn = !!token;
   }
 });
 

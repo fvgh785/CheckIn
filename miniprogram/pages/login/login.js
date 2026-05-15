@@ -48,6 +48,7 @@ Page({
         if (res.statusCode === 200 && res.data.token) {
           wx.setStorageSync('token', res.data.token);
           app.globalData.token = res.data.token;
+          app.globalData.isLoggedIn = true;
 
           const nickname = res.data.nickname || '';
           const email = res.data.email || '';

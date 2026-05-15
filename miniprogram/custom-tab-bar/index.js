@@ -1,6 +1,7 @@
 Component({
   data: {
     selected: '/pages/index/index',
+    visible: false,
     allTabs: [
       {
         id: '/pages/index/index',
@@ -60,27 +61,30 @@ Component({
       if (this._pending) return;
       this._pending = true;
       const app = getApp();
+      app.syncLoginStatus();
       const token = app.globalData.token || wx.getStorageSync('token');
-      if (token) {
-        wx.request({
-          url: app.globalData.apiBase + '/membership/status',
-          header: { 'Authorization': 'Bearer ' + token },
-          success: (res) => {
-            const active = res.data && res.data.active;
-            app.globalData.isMember = active;
-            this._applyList(active);
-          },
-          fail: () => {
-            this._applyList(app.globalData.isMember || false);
-          },
-          complete: () => {
-            this._pending = false;
-          }
-        });
-      } else {
+      if (!token) {
+        // 未登录：隐藏整个导航栏
+        this.setData({ visible: false, list: [] });
         this._pending = false;
-        this._applyList(false);
+        return;
       }
+      this.setData({ visible: true });
+      wx.request({
+        url: app.globalData.apiBase + '/membership/status',
+        header: { 'Authorization': 'Bearer ' + token },
+        success: (res) => {
+          const active = res.data && res.data.active;
+          app.globalData.isMember = active;
+          this._applyList(active);
+        },
+        fail: () => {
+          this._applyList(app.globalData.isMember || false);
+        },
+        complete: () => {
+          this._pending = false;
+        }
+      });
     },
 
     _applyList(isMember) {
