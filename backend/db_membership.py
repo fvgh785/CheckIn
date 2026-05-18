@@ -493,10 +493,7 @@ def update_squad_streaks_for_user(user_id):
             squads = cur.fetchall()
 
             for squad in squads:
-                # 今天已经全员打卡确认过，跳过（避免重复 +1）
                 last_date = squad.get('last_streak_date')
-                if last_date and last_date == today:
-                    continue
 
                 # 获取所有成员的今日打卡状态
                 cur.execute(
@@ -516,6 +513,9 @@ def update_squad_streaks_for_user(user_id):
                         break
 
                 if all_checked:
+                    # 当天已经确认过全勤（current_streak > 0 且 last_streak_date 为今天），跳过避免重复 +1
+                    if last_date and last_date == today and squad['current_streak'] > 0:
+                        continue
                     new_streak = squad['current_streak'] + 1
                     new_max = max(new_streak, squad['max_streak'])
                     cur.execute(
