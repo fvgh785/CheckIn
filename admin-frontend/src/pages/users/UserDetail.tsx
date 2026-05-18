@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Descriptions, Tag, Table, Typography, Button, Spin } from 'antd';
+import { Card, Descriptions, Tag, Table, Typography, Button, Spin, Grid } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { getUserDetail } from '../../services/admin';
 import dayjs from 'dayjs';
@@ -32,6 +32,8 @@ interface UserDetailData {
 export default function UserDetail() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.lg;
   const [user, setUser] = useState<UserDetailData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -66,7 +68,7 @@ export default function UserDetail() {
       <Title level={4}>用户详情</Title>
 
       <Card title="基本信息" style={{ marginBottom: 16 }}>
-        <Descriptions column={2}>
+        <Descriptions column={isMobile ? 1 : 2}>
           <Descriptions.Item label="User ID">{user.user_id}</Descriptions.Item>
           <Descriptions.Item label="Open ID">{user.open_id}</Descriptions.Item>
           <Descriptions.Item label="手机号">{user.phone || '-'}</Descriptions.Item>
@@ -80,7 +82,7 @@ export default function UserDetail() {
       </Card>
 
       <Card title="打卡统计" style={{ marginBottom: 16 }}>
-        <Descriptions column={3}>
+        <Descriptions column={isMobile ? 1 : 3}>
           <Descriptions.Item label="累计打卡">{user.stats.total_days} 天</Descriptions.Item>
           <Descriptions.Item label="当前连续">{user.stats.current_streak} 天</Descriptions.Item>
           <Descriptions.Item label="最长连续">{user.stats.max_streak} 天</Descriptions.Item>
@@ -88,7 +90,7 @@ export default function UserDetail() {
       </Card>
 
       <Card title="会员状态" style={{ marginBottom: 16 }}>
-        <Descriptions column={2}>
+        <Descriptions column={isMobile ? 1 : 2}>
           <Descriptions.Item label="是否会员">
             {user.membership.active ? <Tag color="gold">是</Tag> : <Tag>否</Tag>}
           </Descriptions.Item>

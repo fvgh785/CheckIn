@@ -25,9 +25,10 @@ api.interceptors.response.use(
         localStorage.removeItem('admin_token');
         localStorage.removeItem('admin_info');
         // 仅在非登录页时跳转
-        if (window.location.pathname !== '/login') {
+        const loginPath = '/admin/login';
+        if (window.location.pathname !== loginPath) {
           message.error('登录已过期，请重新登录');
-          window.location.href = '/login';
+          window.location.href = loginPath;
         }
       } else if (status === 403) {
         message.error(data?.error || '无权限执行此操作');

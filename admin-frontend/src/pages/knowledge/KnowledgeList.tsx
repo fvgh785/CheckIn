@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Table, Button, Modal, Form, Input, Select, Switch, Space, Tag, message, Popconfirm, Typography } from 'antd';
+import { Table, Button, Modal, Form, Input, Select, Switch, Space, Tag, message, Popconfirm, Typography, Grid } from 'antd';
 import { PlusOutlined, ReloadOutlined } from '@ant-design/icons';
 import { getKnowledgeBases, getKnowledgeBaseDetail, createKnowledgeBase, updateKnowledgeBase, deleteKnowledgeBase, rebuildKnowledgeIndex } from '../../services/admin';
 
@@ -35,6 +35,8 @@ export default function KnowledgeList() {
   const [rebuilding, setRebuilding] = useState(false);
   const [contentLoading, setContentLoading] = useState(false);
   const [form] = Form.useForm();
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.lg;
 
   const fetchData = async (p = page) => {
     setLoading(true);
@@ -150,7 +152,7 @@ export default function KnowledgeList() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
         <Title level={4} style={{ margin: 0 }}>知识库管理</Title>
         <Space>
           <Select
@@ -185,7 +187,7 @@ export default function KnowledgeList() {
         onCancel={() => setModalOpen(false)}
         onOk={handleSubmit}
         confirmLoading={submitting}
-        width={700}
+        width={isMobile ? '95%' : 700}
         destroyOnClose
       >
         <Form form={form} layout="vertical">

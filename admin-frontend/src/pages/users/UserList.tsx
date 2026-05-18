@@ -107,7 +107,7 @@ export default function UserList() {
         prefix={<SearchOutlined />}
         value={keyword}
         onChange={(e) => { setKeyword(e.target.value); setPage(1); }}
-        style={{ width: 300, marginBottom: 16 }}
+        style={{ maxWidth: 400, width: '100%', marginBottom: 16 }}
         allowClear
       />
       <Table

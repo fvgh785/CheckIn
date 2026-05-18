@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Layout, Menu, Button, Dropdown, theme, Modal, Input, App } from 'antd';
+import { Layout, Menu, Button, Dropdown, theme, Modal, Input, App, Grid } from 'antd';
 import {
   DashboardOutlined,
   UserOutlined,
@@ -57,6 +57,8 @@ export default function MainLayout() {
   const location = useLocation();
   const { token: themeToken } = theme.useToken();
   const { message } = App.useApp();
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.lg;
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [oldPw, setOldPw] = useState('');
   const [newPw, setNewPw] = useState('');
@@ -152,6 +154,9 @@ export default function MainLayout() {
         trigger={null}
         collapsible
         collapsed={collapsed}
+        breakpoint="lg"
+        collapsedWidth={0}
+        onBreakpoint={(broken) => setCollapsed(broken)}
         style={{ background: themeToken.colorBgContainer }}
       >
         <div
@@ -187,7 +192,7 @@ export default function MainLayout() {
       <Layout>
         <Header
           style={{
-            padding: '0 24px',
+            padding: isMobile ? '0 12px' : '0 24px',
             background: themeToken.colorBgContainer,
             display: 'flex',
             alignItems: 'center',
@@ -208,8 +213,8 @@ export default function MainLayout() {
         </Header>
         <Content
           style={{
-            margin: 24,
-            padding: 24,
+            margin: isMobile ? 8 : 24,
+            padding: isMobile ? 12 : 24,
             background: themeToken.colorBgContainer,
             borderRadius: themeToken.borderRadiusLG,
             minHeight: 280,

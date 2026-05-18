@@ -83,7 +83,7 @@ export default function CheckinList() {
       <Title level={4}>打卡管理</Title>
       <Space style={{ marginBottom: 16 }} wrap>
         <Input placeholder="User ID" value={filterUserId}
-          onChange={(e) => setFilterUserId(e.target.value)} style={{ width: 200 }} prefix={<SearchOutlined />} />
+          onChange={(e) => setFilterUserId(e.target.value)} style={{ maxWidth: 300, width: '100%' }} prefix={<SearchOutlined />} />
         <DatePicker placeholder="开始日期" onChange={(d) => setFilterDateFrom(d ? d.format('YYYY-MM-DD') : '')} />
         <DatePicker placeholder="结束日期" onChange={(d) => setFilterDateTo(d ? d.format('YYYY-MM-DD') : '')} />
         <Button type="primary" onClick={loadData}>搜索</Button>

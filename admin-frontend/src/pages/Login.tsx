@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Form, Input, Button, Card, Typography, message } from 'antd';
+import { Form, Input, Button, Card, Typography, message, Grid } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { adminLogin } from '../services/admin';
 
@@ -9,6 +9,8 @@ const { Title, Text } = Typography;
 export default function Login() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.lg;
 
   const onFinish = async (values: { username: string; password: string }) => {
     setLoading(true);
@@ -37,8 +39,8 @@ export default function Login() {
       }}
     >
       <Card
-        style={{ width: 400, boxShadow: '0 8px 24px rgba(0,0,0,0.15)' }}
-        styles={{ body: { padding: '40px 32px' } }}
+        style={{ maxWidth: 400, width: '90%', boxShadow: '0 8px 24px rgba(0,0,0,0.15)' }}
+        styles={{ body: { padding: isMobile ? '24px 16px' : '40px 32px' } }}
       >
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <Title level={3} style={{ marginBottom: 4 }}>打卡后台管理</Title>
