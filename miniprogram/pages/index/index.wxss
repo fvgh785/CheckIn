@@ -360,7 +360,8 @@
 .cal-nav-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 24rpx;
   margin-bottom: 28rpx;
   padding: 0 8rpx;
 }
@@ -427,6 +428,7 @@
   border-radius: 16rpx;
   transition: all 0.15s;
   margin-bottom: 2rpx;
+  box-sizing: border-box;
 }
 
 .cal-day-pad {

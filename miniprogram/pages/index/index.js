@@ -268,7 +268,7 @@ Page({
       if (isChecked && !isMakeup) cls += ' cal-day-checked';
       else if (isMakeup) cls += ' cal-day-makeup';
       else if (isAvailable) cls += ' cal-day-available';
-      else if (isFuture || isToday) cls += ' cal-day-future';
+      else if (isFuture) cls += ' cal-day-future';
 
       days.push({
         date: dateStr,

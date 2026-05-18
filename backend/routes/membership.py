@@ -14,6 +14,7 @@ from db_membership import (
     get_monthly_checkin_status,
     is_member_active, activate_membership,
     check_insight_quota, use_insight_quota,
+    update_squad_streaks_for_user,
 )
 from ai_insight import generate_insight_for_user
 from db_admin import get_config_value
@@ -302,6 +303,12 @@ def handle_makeup():
     try:
         result = use_makeup_card(g.user['userId'], target_date)
         if result['success']:
+            # 补签当天时，联动更新小队全勤
+            if target_date == str(date.today()):
+                try:
+                    update_squad_streaks_for_user(g.user['userId'])
+                except Exception:
+                    _logger.debug(f'update_squad_streaks skipped for user {g.user["userId"]} after makeup')
             return jsonify(result)
         return jsonify(result), 400
     except Exception:

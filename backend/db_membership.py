@@ -493,7 +493,7 @@ def update_squad_streaks_for_user(user_id):
             squads = cur.fetchall()
 
             for squad in squads:
-                # 今天已经更新过，跳过
+                # 今天已经全员打卡确认过，跳过（避免重复 +1）
                 last_date = squad.get('last_streak_date')
                 if last_date and last_date == today:
                     continue
@@ -517,15 +517,19 @@ def update_squad_streaks_for_user(user_id):
 
                 if all_checked:
                     new_streak = squad['current_streak'] + 1
+                    new_max = max(new_streak, squad['max_streak'])
+                    cur.execute(
+                        'UPDATE squads SET current_streak = %s, max_streak = %s, last_streak_date = %s WHERE id = %s',
+                        (new_streak, new_max, today, squad['id'])
+                    )
                 else:
-                    new_streak = 0
-
-                new_max = max(new_streak, squad['max_streak'])
-
-                cur.execute(
-                    'UPDATE squads SET current_streak = %s, max_streak = %s, last_streak_date = %s WHERE id = %s',
-                    (new_streak, new_max, today, squad['id'])
-                )
+                    # 新的一天首次评估发现未全员打卡：清零（不标记 last_streak_date，
+                    # 以便后续成员打卡时能重新评估）
+                    if not last_date or last_date != today:
+                        cur.execute(
+                            'UPDATE squads SET current_streak = 0 WHERE id = %s',
+                            (squad['id'],)
+                        )
             conn.commit()
     finally:
         conn.close()
