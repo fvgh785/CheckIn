@@ -28,9 +28,11 @@ Page({
   },
 
   onShow() {
-    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
-      this.getTabBar().setData({ selected: '/pages/profile/profile' });
-    }
+    try {
+      if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+        this.getTabBar().setData({ selected: '/pages/profile/profile' });
+      }
+    } catch (e) { /* tabBar not ready */ }
     this.checkLoginStatus();
   },
 

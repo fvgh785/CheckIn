@@ -13,9 +13,11 @@ Page({
   },
 
   onShow() {
-    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
-      this.getTabBar().setData({ selected: '/pages/wish/wish' });
-    }
+    try {
+      if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+        this.getTabBar().setData({ selected: '/pages/wish/wish' });
+      }
+    } catch (e) { /* tabBar not ready */ }
     this.checkLoginStatus();
   },
 

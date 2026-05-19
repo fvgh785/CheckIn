@@ -510,7 +510,7 @@ def handle_admin_add_checkin():
 @admin_bp.route('/checkin/<checkin_id>', methods=['DELETE'])
 @admin_required
 def handle_delete_checkin(checkin_id):
-    """删除打卡记录"""
+    """删除打卡记录（同时清理关联的补签卡记录，确保连续天数计算正确）"""
     try:
         conn = get_connection()
         try:
@@ -520,10 +520,16 @@ def handle_delete_checkin(checkin_id):
                 if not record:
                     return jsonify({'error': '打卡记录不存在'}), 404
 
+                user_id = record['user_id']
+                check_date = record['check_date']
+
+                # 删除打卡记录
                 cur.execute('DELETE FROM check_ins WHERE id = %s', (checkin_id,))
+                # 同步删除关联的补签卡记录（若该打卡是通过补签卡创建的）
+                cur.execute('DELETE FROM makeup_cards WHERE user_id = %s AND used_date = %s', (user_id, check_date))
                 conn.commit()
-                write_admin_log(g.admin['id'], 'delete', 'checkin', record['user_id'],
-                                f'删除打卡记录: {record["check_date"]}')
+                write_admin_log(g.admin['id'], 'delete', 'checkin', user_id,
+                                f'删除打卡记录: {check_date}')
                 return jsonify({'success': True, 'message': '打卡记录已删除'})
         finally:
             conn.close()

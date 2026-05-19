@@ -14,9 +14,11 @@ Page({
   },
 
   onShow() {
-    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
-      this.getTabBar().setData({ selected: '/pages/squad/squad' });
-    }
+    try {
+      if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+        this.getTabBar().setData({ selected: '/pages/squad/squad' });
+      }
+    } catch (e) { /* tabBar not ready */ }
     this.checkLoginStatus();
   },
 

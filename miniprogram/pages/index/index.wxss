@@ -351,6 +351,8 @@
   margin: 32rpx 0;
   padding: 16rpx 0;
   cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .makeup-bar-empty {
@@ -367,6 +369,8 @@
   padding: 10rpx 28rpx;
   border-radius: 24rpx;
   transition: all 0.2s;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .makeup-bar:active .makeup-text {

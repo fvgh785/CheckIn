@@ -906,13 +906,23 @@ def get_makeup_card_used_count(user_id):
 
 
 def use_makeup_card(user_id, target_date, mood=None, mood_note=None):
-    """使用补签卡，补签到指定日期"""
+    """使用补签卡，补签到指定日期（仅限当月）"""
     init_db()
     conn = get_connection()
     try:
         today = date.today()
         month_start = today.replace(day=1)
         limit = get_makeup_card_limit()
+
+        # 校验目标日期格式
+        target = date.fromisoformat(target_date)
+
+        # 仅允许补签当月日期（不能跨月、不能补签未来日期）
+        target_month_start = target.replace(day=1)
+        if target_month_start != month_start:
+            return {'success': False, 'message': '补签卡仅限当月使用，不能跨月补签'}
+        if target > today:
+            return {'success': False, 'message': '不能补签未来日期'}
 
         with conn.cursor() as cur:
             # 在同一事务中完成计数检查+插入，避免并发超限

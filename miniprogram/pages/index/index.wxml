@@ -68,7 +68,7 @@
   </view>
 
   <!-- 补签卡入口（会员可见） -->
-  <view wx:if="{{isMember && makeupInfo}}" class="makeup-bar {{makeupInfo.remaining > 0 ? '' : 'makeup-bar-empty'}}" bindtap="openCalendar">
+  <view wx:if="{{isMember && makeupInfo}}" class="makeup-bar {{makeupInfo.remaining > 0 ? '' : 'makeup-bar-empty'}}" bindtap="openCalendar" hover-class="none">
     <view class="makeup-text">
       <view class="makeup-icon"></view>
       <text>补签卡：剩余 {{makeupInfo.remaining}}/{{makeupInfo.limit}} 张</text>

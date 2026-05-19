@@ -43,9 +43,11 @@ Page({
   },
 
   onShow() {
-    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
-      this.getTabBar().setData({ selected: '/pages/index/index' });
-    }
+    try {
+      if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+        this.getTabBar().setData({ selected: '/pages/index/index' });
+      }
+    } catch (e) { /* tabBar not ready */ }
     this.checkLoginStatus();
   },
 
@@ -293,8 +295,9 @@ Page({
       const isMakeup = makeupSet.has(dateStr);
       const mood = mood_map[dateStr] || null;
       const remaining = makeup_info ? makeup_info.remaining : 0;
-      // 可补签条件：过去的日期 + 未打卡 + 还有补签卡剩余
-      const isAvailable = !isFuture && !isToday && !isChecked && remaining > 0;
+      // 可补签条件：当月过去的日期 + 未打卡 + 还有补签卡剩余 + 仅限当前自然月
+      const isCurrentMonth = year === now.getFullYear() && month === (now.getMonth() + 1);
+      const isAvailable = !isFuture && !isToday && !isChecked && remaining > 0 && isCurrentMonth;
 
       let cls = 'cal-day-normal';
       if (isToday) cls += ' cal-day-today';

@@ -50,35 +50,45 @@ Component({
 
   lifetimes: {
     attached() {
+      this._destroyed = false;
       this._updateList();
+    },
+    detached() {
+      this._destroyed = true;
     }
   },
 
   methods: {
     _pending: false,
+    _switchLocked: false,
 
     _updateList() {
-      if (this._pending) return;
+      if (this._pending || this._destroyed) return;
       this._pending = true;
       const app = getApp();
       app.syncLoginStatus();
       const token = app.globalData.token || wx.getStorageSync('token');
       if (!token) {
-        // 未登录：隐藏整个导航栏
-        this.setData({ visible: false, list: [] });
+        if (!this._destroyed) {
+          this.setData({ visible: false, list: [] });
+        }
         this._pending = false;
         return;
       }
-      this.setData({ visible: true });
+      if (!this._destroyed) {
+        this.setData({ visible: true });
+      }
       wx.request({
         url: app.globalData.apiBase + '/membership/status',
         header: { 'Authorization': 'Bearer ' + token },
         success: (res) => {
+          if (this._destroyed) return;
           const active = res.data && res.data.active;
           app.globalData.isMember = active;
           this._applyList(active);
         },
         fail: () => {
+          if (this._destroyed) return;
           this._applyList(app.globalData.isMember || false);
         },
         complete: () => {
@@ -88,14 +98,23 @@ Component({
     },
 
     _applyList(isMember) {
+      if (this._destroyed) return;
       this.setData({
         list: this.data.allTabs.filter(t => isMember || t.id !== '/pages/insight/insight')
       });
     },
 
     switchTab(e) {
+      if (this._switchLocked) return;
       const path = e.currentTarget.dataset.path;
-      wx.switchTab({ url: path });
+      if (path === this.data.selected) return;
+      this._switchLocked = true;
+      try {
+        wx.switchTab({ url: path });
+      } catch (err) {
+        console.error('switchTab error:', err);
+      }
+      setTimeout(() => { this._switchLocked = false; }, 500);
     }
   }
 });

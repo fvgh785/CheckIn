@@ -12,9 +12,11 @@ Page({
   },
 
   onShow() {
-    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
-      this.getTabBar().setData({ selected: '/pages/insight/insight' });
-    }
+    try {
+      if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+        this.getTabBar().setData({ selected: '/pages/insight/insight' });
+      }
+    } catch (e) { /* tabBar not ready */ }
     this.checkLoginStatus();
   },
 
