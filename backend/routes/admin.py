@@ -463,6 +463,8 @@ def handle_checkin_list():
                     'user_id': r['user_id'],
                     'open_id': r['open_id'][:20] + '...' if len(r['open_id']) > 20 else r['open_id'],
                     'check_date': str(r['check_date']),
+                    'mood': r.get('mood', None),
+                    'mood_note': r.get('mood_note', ''),
                     'created_at': str(r['created_at']),
                 } for r in rows]
                 return jsonify({'checkins': checkins, 'total': total, 'page': page, 'page_size': page_size})

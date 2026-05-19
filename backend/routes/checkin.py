@@ -13,7 +13,10 @@ _logger = logging.getLogger(__name__)
 @auth_required
 def handle_checkin():
     try:
-        result = check_in_by_user_id(g.user['userId'])
+        data = request.get_json(silent=True) or {}
+        mood = data.get('mood', None)
+        mood_note = data.get('mood_note', None)
+        result = check_in_by_user_id(g.user['userId'], mood=mood, mood_note=mood_note)
         if result['success']:
             # 打卡成功后联动：喂食宠物 + 更新心愿进度（静默处理，不影响打卡返回）
             pet_result = None

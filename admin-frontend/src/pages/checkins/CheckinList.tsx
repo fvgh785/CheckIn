@@ -11,8 +11,18 @@ interface Checkin {
   user_id: string;
   open_id: string;
   check_date: string;
+  mood: string | null;
+  mood_note: string;
   created_at: string;
 }
+
+const MOOD_MAP: Record<string, { emoji: string; label: string }> = {
+  happy: { emoji: '😊', label: '开心' },
+  calm: { emoji: '😌', label: '平静' },
+  down: { emoji: '😔', label: '低落' },
+  annoyed: { emoji: '😤', label: '烦躁' },
+  tired: { emoji: '😴', label: '疲惫' },
+};
 
 export default function CheckinList() {
   const [data, setData] = useState<Checkin[]>([]);
@@ -68,6 +78,18 @@ export default function CheckinList() {
     { title: 'User ID', dataIndex: 'user_id', key: 'user_id', width: 180, ellipsis: true },
     { title: 'Open ID', dataIndex: 'open_id', key: 'open_id', width: 160, ellipsis: true },
     { title: '打卡日期', dataIndex: 'check_date', key: 'check_date', width: 120 },
+    {
+      title: '心情', dataIndex: 'mood', key: 'mood', width: 90,
+      render: (v: string | null) => {
+        if (!v) return '-';
+        const m = MOOD_MAP[v];
+        return m ? `${m.emoji} ${m.label}` : v;
+      },
+    },
+    {
+      title: '心情备注', dataIndex: 'mood_note', key: 'mood_note', width: 150, ellipsis: true,
+      render: (v: string) => v || '-',
+    },
     { title: '打卡时间', dataIndex: 'created_at', key: 'created_at', width: 170,
       render: (v: string) => dayjs(v).format('YYYY-MM-DD HH:mm:ss') },
     {

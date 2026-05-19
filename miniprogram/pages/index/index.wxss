@@ -158,7 +158,7 @@
 /* ========== 标题区 ========== */
 .header {
   text-align: center;
-  margin-bottom: 40rpx;
+  margin-bottom: 24rpx;
 }
 
 .title {
@@ -174,6 +174,77 @@
   font-size: 30rpx;
   color: #6B9E99;
   font-family: sans-serif;
+}
+
+/* ========== 心情选择区 ========== */
+.mood-picker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+
+.mood-items {
+  display: flex;
+  justify-content: center;
+  gap: 20rpx;
+  margin-bottom: 16rpx;
+}
+
+.mood-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16rpx 20rpx;
+  border-radius: 20rpx;
+  border: 3rpx solid transparent;
+  transition: all 0.2s;
+}
+
+.mood-item:active {
+  transform: scale(0.92);
+}
+
+.mood-item-selected {
+  border-style: solid;
+  transform: scale(1.05);
+}
+
+.mood-emoji {
+  font-size: 48rpx;
+  line-height: 1;
+}
+
+.mood-label {
+  font-size: 22rpx;
+  color: #4A7A75;
+  margin-top: 6rpx;
+}
+
+.mood-note-toggle {
+  padding: 8rpx 24rpx;
+  cursor: pointer;
+}
+
+.mood-note-toggle-text {
+  font-size: 26rpx;
+  color: #6B9E99;
+}
+
+.mood-note-wrap {
+  width: 80%;
+  margin-top: 8rpx;
+}
+
+.mood-note-input {
+  width: 100%;
+  height: 64rpx;
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 0 24rpx;
+  font-size: 28rpx;
+  color: #2C4A47;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
 }
 
 .checkin-section {
@@ -471,6 +542,33 @@
   color: #2C4A47;
 }
 
+/* 心情热力图颜色 */
+.cal-mood-happy {
+  background: linear-gradient(135deg, #FEF3C7, #FCD34D) !important;
+}
+
+.cal-mood-calm {
+  background: linear-gradient(135deg, #D4F1F0, #81D8D0) !important;
+}
+
+.cal-mood-down {
+  background: linear-gradient(135deg, #E0E7FF, #A5B4FC) !important;
+}
+
+.cal-mood-annoyed {
+  background: linear-gradient(135deg, #FEE2E2, #FCA5A5) !important;
+}
+
+.cal-mood-tired {
+  background: linear-gradient(135deg, #F3F4F6, #D1D5DB) !important;
+}
+
+.cal-mood-emoji {
+  font-size: 20rpx;
+  line-height: 1;
+  margin-top: 2rpx;
+}
+
 .cal-mark {
   font-size: 20rpx;
   line-height: 1;
@@ -516,7 +614,8 @@
 .cal-legend {
   display: flex;
   justify-content: center;
-  gap: 32rpx;
+  gap: 20rpx;
+  flex-wrap: wrap;
   margin-top: 24rpx;
   padding-top: 20rpx;
   border-top: 1rpx solid #E8F7F6;
@@ -525,8 +624,8 @@
 .cal-legend-item {
   display: flex;
   align-items: center;
-  gap: 8rpx;
-  font-size: 24rpx;
+  gap: 6rpx;
+  font-size: 22rpx;
   color: #6B9E99;
 }
 
@@ -536,19 +635,24 @@
   border-radius: 50%;
 }
 
-.cal-dot-checked {
-  background: #C5EDEB;
-  border: 2rpx solid #3DAFA8;
+.cal-dot-mood-happy {
+  background: #FCD34D;
 }
 
-.cal-dot-makeup {
+.cal-dot-mood-calm {
   background: #81D8D0;
-  border: 2rpx solid #2A9D95;
 }
 
-.cal-dot-avail {
-  background: #F5FBFA;
-  border: 2rpx dashed #C5EDEB;
+.cal-dot-mood-down {
+  background: #A5B4FC;
+}
+
+.cal-dot-mood-annoyed {
+  background: #FCA5A5;
+}
+
+.cal-dot-mood-tired {
+  background: #D1D5DB;
 }
 
 /* 底部提示 */

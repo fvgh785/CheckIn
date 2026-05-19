@@ -36,6 +36,26 @@
     <text class="date">{{today}}</text>
   </view>
 
+  <!-- 心情选择区 -->
+  <view wx:if="{{isLoggedIn && !hasChecked}}" class="mood-picker">
+    <view class="mood-items">
+      <view wx:for="{{moodList}}" wx:key="key"
+            class="mood-item {{selectedMood === item.key ? 'mood-item-selected' : ''}}"
+            style="{{selectedMood === item.key ? 'background:' + item.bgColor + ';border-color:' + item.color : ''}}"
+            bindtap="selectMood" data-key="{{item.key}}">
+        <text class="mood-emoji">{{item.emoji}}</text>
+        <text class="mood-label">{{item.label}}</text>
+      </view>
+    </view>
+    <view class="mood-note-toggle" bindtap="toggleMoodNote">
+      <text class="mood-note-toggle-text">{{showMoodNote ? '收起' : '写一句话...'}}</text>
+    </view>
+    <view wx:if="{{showMoodNote}}" class="mood-note-wrap">
+      <input class="mood-note-input" placeholder="今天心情如何？" value="{{moodNote}}"
+             bindinput="onMoodNoteInput" maxlength="50" confirm-type="done" />
+    </view>
+  </view>
+
   <!-- 打卡按钮 -->
   <view class="checkin-section">
     <view class="checkin-btn {{hasChecked ? 'checked' : ''}}" bindtap="handleCheckIn">
@@ -83,11 +103,16 @@
       <!-- 日期网格 -->
       <view class="cal-days-grid">
         <view wx:for="{{calDays}}" wx:key="date"
-              class="cal-day-cell {{item.cls}}"
+              class="cal-day-cell {{item.cls}} {{item.moodCls}}"
               bindtap="{{item.canTap ? 'calTapDay' : ''}}"
               data-date="{{item.date}}">
           <text class="cal-day-num">{{item.day}}</text>
-          <view wx:if="{{item.isChecked && !item.isMakeup}}" class="cal-mark cal-mark-checked">✓</view>
+          <text wx:if="{{item.mood === 'happy'}}" class="cal-mood-emoji">😊</text>
+          <text wx:elif="{{item.mood === 'calm'}}" class="cal-mood-emoji">😌</text>
+          <text wx:elif="{{item.mood === 'down'}}" class="cal-mood-emoji">😔</text>
+          <text wx:elif="{{item.mood === 'annoyed'}}" class="cal-mood-emoji">😤</text>
+          <text wx:elif="{{item.mood === 'tired'}}" class="cal-mood-emoji">😴</text>
+          <view wx:elif="{{item.isChecked && !item.isMakeup}}" class="cal-mark cal-mark-checked">✓</view>
           <view wx:elif="{{item.isMakeup}}" class="cal-mark cal-mark-makeup">↻</view>
         </view>
       </view>
@@ -95,16 +120,24 @@
       <!-- 图例 -->
       <view class="cal-legend">
         <view class="cal-legend-item">
-          <view class="cal-legend-dot cal-dot-checked"></view>
-          <text>已打卡</text>
+          <view class="cal-legend-dot cal-dot-mood-happy"></view>
+          <text>开心</text>
         </view>
         <view class="cal-legend-item">
-          <view class="cal-legend-dot cal-dot-makeup"></view>
-          <text>已补签</text>
+          <view class="cal-legend-dot cal-dot-mood-calm"></view>
+          <text>平静</text>
         </view>
         <view class="cal-legend-item">
-          <view class="cal-legend-dot cal-dot-avail"></view>
-          <text>可补签</text>
+          <view class="cal-legend-dot cal-dot-mood-down"></view>
+          <text>低落</text>
+        </view>
+        <view class="cal-legend-item">
+          <view class="cal-legend-dot cal-dot-mood-annoyed"></view>
+          <text>烦躁</text>
+        </view>
+        <view class="cal-legend-item">
+          <view class="cal-legend-dot cal-dot-mood-tired"></view>
+          <text>疲惫</text>
         </view>
       </view>
 

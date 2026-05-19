@@ -850,10 +850,17 @@ def get_monthly_checkin_status(user_id, year, month):
     try:
         with conn.cursor() as cur:
             cur.execute(
-                'SELECT check_date FROM check_ins WHERE user_id = %s AND YEAR(check_date) = %s AND MONTH(check_date) = %s',
+                'SELECT check_date, mood FROM check_ins WHERE user_id = %s AND YEAR(check_date) = %s AND MONTH(check_date) = %s',
                 (user_id, year, month)
             )
-            checked_dates = [str(r['check_date']) for r in cur.fetchall()]
+            check_rows = cur.fetchall()
+            checked_dates = [str(r['check_date']) for r in check_rows]
+            # 构建 mood_map: { '2024-01-15': 'happy', ... }
+            mood_map = {}
+            for r in check_rows:
+                date_str = str(r['check_date'])
+                if r['mood']:
+                    mood_map[date_str] = r['mood']
 
             cur.execute(
                 'SELECT used_date FROM makeup_cards WHERE user_id = %s AND YEAR(used_date) = %s AND MONTH(used_date) = %s',
@@ -866,6 +873,7 @@ def get_monthly_checkin_status(user_id, year, month):
             'month': month,
             'checked_dates': checked_dates,
             'makeup_dates': makeup_dates,
+            'mood_map': mood_map,
         }
     finally:
         conn.close()
@@ -897,7 +905,7 @@ def get_makeup_card_used_count(user_id):
         conn.close()
 
 
-def use_makeup_card(user_id, target_date):
+def use_makeup_card(user_id, target_date, mood=None, mood_note=None):
     """使用补签卡，补签到指定日期"""
     init_db()
     conn = get_connection()
@@ -921,11 +929,11 @@ def use_makeup_card(user_id, target_date):
                 'INSERT INTO makeup_cards (id, user_id, used_date) VALUES (%s, %s, %s)',
                 (card_id, user_id, target_date)
             )
-            # 同时插入打卡记录
+            # 同时插入打卡记录（带心情）
             check_id = str(uuid.uuid4())
             cur.execute(
-                'INSERT INTO check_ins (id, user_id, check_date) VALUES (%s, %s, %s)',
-                (check_id, user_id, target_date)
+                'INSERT INTO check_ins (id, user_id, check_date, mood, mood_note) VALUES (%s, %s, %s, %s, %s)',
+                (check_id, user_id, target_date, mood, mood_note or '')
             )
             conn.commit()
 

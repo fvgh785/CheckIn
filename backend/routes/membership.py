@@ -301,7 +301,7 @@ def handle_makeup():
         return jsonify({'error': '日期格式无效，需为YYYY-MM-DD'}), 400
 
     try:
-        result = use_makeup_card(g.user['userId'], target_date)
+        result = use_makeup_card(g.user['userId'], target_date, mood=data.get('mood'), mood_note=data.get('mood_note'))
         if result['success']:
             # 补签当天时，联动更新小队全勤
             if target_date == str(date.today()):
@@ -356,6 +356,7 @@ def handle_makeup_calendar():
             'month': status['month'],
             'checked_dates': status['checked_dates'],
             'makeup_dates': status['makeup_dates'],
+            'mood_map': status['mood_map'],
             'makeup_info': {
                 'used': used,
                 'limit': limit_val,

@@ -140,6 +140,15 @@ def init_db():
                 cur.execute('ALTER TABLE users ADD COLUMN email VARCHAR(100) DEFAULT \'\'')
             except Exception:
                 pass
+            # 兼容旧表：添加 mood / mood_note 字段
+            try:
+                cur.execute('ALTER TABLE check_ins ADD COLUMN mood VARCHAR(20) DEFAULT NULL')
+            except Exception:
+                pass
+            try:
+                cur.execute('ALTER TABLE check_ins ADD COLUMN mood_note VARCHAR(200) DEFAULT \'\'')
+            except Exception:
+                pass
             cur.execute('''
                 CREATE TABLE IF NOT EXISTS email_verification_codes (
                     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -686,7 +695,10 @@ def send_verification_email(email, code):
         return False
 
 
-def check_in_by_user_id(user_id, check_date_str=None):
+VALID_MOODS = ('happy', 'calm', 'down', 'annoyed', 'tired')
+
+
+def check_in_by_user_id(user_id, check_date_str=None, mood=None, mood_note=None):
     init_db()
     conn = get_connection()
     try:
@@ -695,15 +707,20 @@ def check_in_by_user_id(user_id, check_date_str=None):
             if not cur.fetchone():
                 return {'success': False, 'message': '用户不存在'}
         today_str = check_date_str or date.today().isoformat()
+        # 校验心情值
+        if mood and mood not in VALID_MOODS:
+            mood = None
+        if mood_note and len(mood_note) > 200:
+            mood_note = mood_note[:200]
         check_id = str(uuid.uuid4())
         try:
             with conn.cursor() as cur:
                 cur.execute(
-                    'INSERT INTO check_ins (id, user_id, check_date) VALUES (%s, %s, %s)',
-                    (check_id, user_id, today_str)
+                    'INSERT INTO check_ins (id, user_id, check_date, mood, mood_note) VALUES (%s, %s, %s, %s, %s)',
+                    (check_id, user_id, today_str, mood, mood_note or '')
                 )
                 conn.commit()
-            return {'success': True, 'message': '打卡成功'}
+            return {'success': True, 'message': '打卡成功', 'mood': mood, 'mood_note': mood_note or ''}
         except pymysql.err.IntegrityError:
             return {'success': False, 'message': '今日已打卡'}
     finally:

@@ -23,7 +23,18 @@ Page({
     calDays: [],
     calCanPrev: true,
     calCanNext: false,
-    calMakeupRemaining: 0
+    calMakeupRemaining: 0,
+    // 心情打卡
+    moodList: [
+      { key: 'happy', emoji: '😊', label: '开心', color: '#FCD34D', bgColor: '#FEF3C7' },
+      { key: 'calm', emoji: '😌', label: '平静', color: '#81D8D0', bgColor: '#D4F1F0' },
+      { key: 'down', emoji: '😔', label: '低落', color: '#A5B4FC', bgColor: '#E0E7FF' },
+      { key: 'annoyed', emoji: '😤', label: '烦躁', color: '#FCA5A5', bgColor: '#FEE2E2' },
+      { key: 'tired', emoji: '😴', label: '疲惫', color: '#D1D5DB', bgColor: '#F3F4F6' }
+    ],
+    selectedMood: 'calm',
+    showMoodNote: false,
+    moodNote: ''
   },
 
   onLoad() {
@@ -148,7 +159,13 @@ Page({
     this.setData({ loading: true });
 
     try {
-      const res = await app.request('/checkin', { method: 'POST' });
+      const res = await app.request('/checkin', {
+        method: 'POST',
+        data: {
+          mood: this.data.selectedMood,
+          mood_note: this.data.moodNote || ''
+        }
+      });
       this.setData({ hasChecked: true });
 
       // 处理宠物反馈
@@ -192,6 +209,21 @@ Page({
     wx.switchTab({ url: '/pages/profile/profile' });
   },
 
+  // ======================== 心情打卡 ========================
+
+  selectMood(e) {
+    const key = e.currentTarget.dataset.key;
+    this.setData({ selectedMood: key });
+  },
+
+  toggleMoodNote() {
+    this.setData({ showMoodNote: !this.data.showMoodNote });
+  },
+
+  onMoodNoteInput(e) {
+    this.setData({ moodNote: e.detail.value });
+  },
+
   // ======================== 补签卡日历 ========================
 
   openCalendar() {
@@ -221,7 +253,7 @@ Page({
   },
 
   buildCalendarDays(data) {
-    const { year, month, checked_dates, makeup_dates, makeup_info } = data;
+    const { year, month, checked_dates, makeup_dates, makeup_info, mood_map } = data;
     const checkedSet = new Set(checked_dates);
     const makeupSet = new Set(makeup_dates);
 
@@ -259,6 +291,7 @@ Page({
       const isFuture = cellDate > todayDate;
       const isChecked = checkedSet.has(dateStr);
       const isMakeup = makeupSet.has(dateStr);
+      const mood = mood_map[dateStr] || null;
       const remaining = makeup_info ? makeup_info.remaining : 0;
       // 可补签条件：过去的日期 + 未打卡 + 还有补签卡剩余
       const isAvailable = !isFuture && !isToday && !isChecked && remaining > 0;
@@ -270,14 +303,22 @@ Page({
       else if (isAvailable) cls += ' cal-day-available';
       else if (isFuture) cls += ' cal-day-future';
 
+      // 心情热力图：已打卡日期叠加心情颜色类
+      let moodCls = '';
+      if (isChecked && mood) {
+        moodCls = `cal-mood-${mood}`;
+      }
+
       days.push({
         date: dateStr,
         day: d,
         cls,
+        moodCls,
         isChecked,
         isMakeup,
         isAvailable,
-        canTap: isAvailable
+        canTap: isAvailable,
+        mood
       });
     }
 
